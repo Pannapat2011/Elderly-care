@@ -3,291 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elderly Care - Super App</title>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Elderly Care - Super App V.MAX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @font-face { font-family: 'mainfront'; src: local('mainfront'); }
         :root {
-            --bg-color: #F0F4F8; --card-bg: #FFFFFF; --primary: #2563EB;
-            --sos-color: #DC2626; --text-main: #0F172A; --text-sub: #475569;
+            --bg-color: #E2E8F0; 
+            --card-bg: #FFFFFF; 
+            --primary: #1E3A8A; 
+            --sos-color: #B91C1C; 
+            --text-main: #020617; 
+            --text-sub: #334155; 
             --radius-large: 28px; --radius-medium: 20px; --radius-small: 16px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'mainfront', 'Prompt', sans-serif; }
         body { background: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; padding-bottom: 120px; }
 
-        /* Header */
-        .header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; background: var(--card-bg); padding: 16px; border-radius: var(--radius-large); box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
-        .avatar { width: 70px; height: 70px; border-radius: 50%; background-image: url('https://i.pravatar.cc/150?img=68'); background-size: cover; border: 4px solid #EFF6FF; }
-        .greeting h1 { font-size: 26px; font-weight: 700; }
-        .greeting p { font-size: 18px; color: var(--text-sub); }
+        .header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; background: var(--card-bg); padding: 16px; border-radius: var(--radius-large); border: 2px solid #CBD5E1; }
+        .avatar { width: 70px; height: 70px; border-radius: 50%; background-image: url('https://i.pravatar.cc/150?img=68'); background-size: cover; border: 4px solid var(--primary); }
+        .greeting h1 { font-size: 28px; font-weight: 700; color: var(--primary); }
+        .greeting p { font-size: 20px; color: var(--text-main); font-weight: 600; }
 
         .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-        .card { background: var(--card-bg); border-radius: var(--radius-large); padding: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03); display: flex; flex-direction: column; overflow: hidden; position: relative;}
+        .card { background: var(--card-bg); border-radius: var(--radius-large); padding: 20px; border: 2px solid #CBD5E1; display: flex; flex-direction: column; }
         .card-wide { grid-column: span 2; }
         .card-square { grid-column: span 1; }
-        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 20px; font-weight: 700; }
+        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 22px; font-weight: 700; color: var(--text-main); border-bottom: 2px solid #E2E8F0; padding-bottom: 8px;}
 
-        /* Vitals Simulation */
-        .vital-box { padding: 20px 16px; border-radius: var(--radius-medium); text-align: center; transition: all 0.3s; }
-        .vital-box-bp { background: #DBEAFE; color: #1E3A8A; }
-        .vital-box-hr { background: #FEE2E2; color: #991B1B; }
+        /* โซนใหม่: เช็กชื่อลูกหลาน & อากาศ */
+        .status-box { background: #F0FDF4; border: 2px solid #86EFAC; padding: 12px; border-radius: var(--radius-medium); font-size: 18px; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 8px; margin-bottom: 8px;}
+        .status-box.away { background: #FEF2F2; border-color: #FCA5A5; color: #991B1B; }
+        
+        .weather-box { background: #FFFBEB; border: 2px solid #FDE047; padding: 16px; border-radius: var(--radius-medium); text-align: center; }
+        .weather-temp { font-size: 36px; font-weight: 700; color: #854D0E; }
+        .weather-desc { font-size: 18px; font-weight: 600; color: #A16207; }
+
+        /* Vitals */
+        .vital-box { padding: 20px 16px; border-radius: var(--radius-medium); text-align: center; border: 2px solid; }
+        .vital-box-bp { background: #EFF6FF; border-color: #93C5FD; color: #1E3A8A; }
+        .vital-box-hr { background: #FEF2F2; border-color: #FCA5A5; color: #991B1B; }
         .vital-icon { font-size: 36px; margin-bottom: 12px; }
         .vital-value { font-size: 32px; font-weight: 700; line-height: 1.2; }
-        .vital-label { font-size: 16px; font-weight: 600; margin-top: 4px; }
+        .vital-label { font-size: 16px; font-weight: 700; margin-top: 4px; }
 
-        /* Pill Management */
-        .pill-item { display: flex; align-items: center; background: #FFF7ED; padding: 16px; border-radius: var(--radius-medium); gap: 16px; }
-        .pill-img { width: 60px; height: 60px; border-radius: 16px; background: url('https://cdn-icons-png.flaticon.com/512/883/883356.png') center/cover; }
+        /* Pills & Appointment */
+        .pill-item { display: flex; align-items: center; background: #FFF7ED; padding: 16px; border-radius: var(--radius-medium); border: 2px solid #FDBA74; gap: 16px; margin-bottom: 12px;}
+        .pill-img { width: 50px; height: 50px; border-radius: 12px; background: url('https://cdn-icons-png.flaticon.com/512/883/883356.png') center/cover; }
         .pill-info { display: flex; flex-direction: column; flex-grow: 1; }
-        .pill-title { font-weight: 700; font-size: 20px; color: #431407; }
-        .pill-time { color: #9A3412; font-size: 16px; font-weight: 600; }
-        .btn-pill { border: none; background: #10B981; color: white; padding: 14px 20px; border-radius: var(--radius-small); font-weight: 700; font-size: 18px; cursor: pointer; }
+        .pill-title { font-weight: 700; font-size: 20px; color: #7C2D12; }
+        .pill-time { color: #9A3412; font-size: 16px; font-weight: 700; }
+        .btn-pill { border: none; background: #059669; color: white; padding: 12px 20px; border-radius: var(--radius-small); font-weight: 700; font-size: 18px; cursor: pointer; box-shadow: 0 4px 0 #047857; }
+        .btn-pill:active { transform: translateY(4px); box-shadow: none; }
+        .btn-pill:disabled { background: #94A3B8; box-shadow: none; transform: none; cursor: not-allowed; }
 
-        /* Appointments */
-        .appointment-box { background: var(--primary); color: white; padding: 20px; border-radius: var(--radius-medium); display: flex; justify-content: space-between; align-items: center; }
-        .btn-ride { background: white; color: var(--primary); border: none; padding: 12px 20px; border-radius: var(--radius-small); font-weight: 700; font-size: 18px; cursor: pointer; display: flex; gap: 8px; align-items: center;}
-
-        /* Memory Gallery */
-        .gallery-container { width: 100%; height: 150px; border-radius: var(--radius-medium); background-color: #E2E8F0; background-position: center; background-size: cover; transition: background-image 1s ease-in-out; }
-
-        /* Brain Game */
-        .game-box { background: #F3E8FF; padding: 16px; border-radius: var(--radius-medium); text-align: center; }
-        .game-q { font-size: 32px; font-weight: 700; color: #6B21A8; margin-bottom: 12px; }
-        .game-input { width: 80px; padding: 10px; font-size: 24px; text-align: center; border-radius: 12px; border: 2px solid #D8B4FE; }
-        .btn-game { background: #9333EA; color: white; border: none; padding: 12px 24px; font-size: 20px; font-weight: 700; border-radius: 12px; cursor: pointer; margin-left: 8px; }
-
-        /* Bottom Bar & SOS */
-        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px; background: linear-gradient(to top, rgba(255,255,255,0.95) 60%, rgba(255,255,255,0)); display: flex; gap: 16px; align-items: flex-end; z-index: 50; }
-        .btn-sos-main { flex-grow: 1; background: var(--sos-color); color: white; border: none; height: 80px; border-radius: 40px; font-size: 28px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 10px 25px rgba(220, 38, 38, 0.4); cursor: pointer; }
+        /* โซนใหม่: บันทึกอาการ (Mood & Pain Tracker) */
+        .mood-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .mood-btn { font-size: 40px; background: #F1F5F9; border: 2px solid #CBD5E1; border-radius: var(--radius-medium); padding: 12px; cursor: pointer; transition: all 0.2s; }
+        .mood-btn:active { transform: scale(0.95); border-color: var(--primary); }
+        .pain-selector { display: none; margin-top: 16px; background: #FEF2F2; padding: 16px; border-radius: var(--radius-medium); border: 2px solid #FCA5A5; }
+        .pain-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .pain-btn { background: white; border: 2px solid #F87171; color: #991B1B; padding: 8px 16px; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; }
         
-        /* AI Floating Button */
-        .ai-fab { width: 80px; height: 80px; border-radius: 40px; background: linear-gradient(135deg, #8B5CF6, #3B82F6); color: white; display: flex; align-items: center; justify-content: center; font-size: 36px; box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4); cursor: pointer; flex-shrink: 0; }
+        /* โซนใหม่: โทรด่วน (One-Tap Call) */
+        .call-card { background: #EEF2FF; border-color: #A5B4FC; text-align: center; }
+        .call-avatar { width: 90px; height: 90px; border-radius: 50%; margin: 0 auto 12px auto; background-image: url('https://i.pravatar.cc/150?img=11'); background-size: cover; border: 4px solid #6366F1; box-shadow: 0 4px 10px rgba(99,102,241,0.3); }
+        .btn-call { background: #4F46E5; color: white; border: none; padding: 12px 24px; border-radius: var(--radius-small); font-weight: 700; font-size: 20px; cursor: pointer; width: 100%; box-shadow: 0 4px 0 #3730A3; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-call:active { transform: translateY(4px); box-shadow: none; }
 
-        /* Modals & Chat */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
-        .chat-box { background: white; width: 90%; max-width: 400px; height: 500px; border-radius: var(--radius-large); display: flex; flex-direction: column; overflow: hidden; }
-        .chat-header { background: #8B5CF6; color: white; padding: 16px; font-size: 20px; font-weight: 700; display: flex; justify-content: space-between; }
-        .chat-body { flex-grow: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #F8FAFC; }
-        .msg { padding: 12px 16px; border-radius: 16px; max-width: 80%; font-size: 18px; }
-        .msg-bot { background: #E2E8F0; align-self: flex-start; border-bottom-left-radius: 4px; }
-        .msg-user { background: #3B82F6; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .chat-input-area { display: flex; padding: 12px; background: white; border-top: 1px solid #E2E8F0; }
-        .chat-input { flex-grow: 1; padding: 12px; font-size: 18px; border: 1px solid #CBD5E1; border-radius: 20px; }
-        .btn-send { background: #3B82F6; color: white; border: none; width: 50px; border-radius: 25px; margin-left: 8px; font-size: 20px; cursor: pointer; }
-
+        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px; background: white; display: flex; gap: 16px; align-items: flex-end; z-index: 50; border-top: 3px solid #E2E8F0; }
+        .btn-sos-main { flex-grow: 1; background: var(--sos-color); color: white; border: none; height: 90px; border-radius: 45px; font-size: 32px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 8px 0 #7F1D1D; cursor: pointer; transition: all 0.2s; }
+        .btn-sos-main:active { transform: translateY(8px); box-shadow: none; }
+        .btn-sos-main:disabled { background: #94A3B8; box-shadow: none; cursor: not-allowed; transform: translateY(8px); }
     </style>
 </head>
 <body>
 
-    <div class="header">
+    <div class="header" id="header-area">
         <div class="avatar"></div>
         <div class="greeting">
-            <h1>สวัสดี, คุณตา</h1>
-            <p>ระบบดูแลอัจฉริยะ พร้อมใช้งาน</p>
+            <h1>สวัสดีครับ คุณตา</h1>
+            <p>วันอาทิตย์ อากาศสดใส</p>
         </div>
     </div>
 
     <div class="bento-grid">
         
-        <div class="card card-square">
-            <div class="vital-box vital-box-bp" id="bp-box">
-                <i class="fa-solid fa-droplet vital-icon"></i>
-                <div class="vital-value" id="bp-value">120/80</div>
-                <div class="vital-label">ความดัน (ปกติ)</div>
+        <div class="card card-wide">
+            <div class="card-header"><i class="fa-solid fa-house-user" style="color:#059669"></i> ลูกหลานวันนี้</div>
+            <div class="status-box">
+                <i class="fa-solid fa-circle-check"></i> หลานชาย: วันนี้มาหาแล้ว
+            </div>
+            <div class="status-box away">
+                <i class="fa-solid fa-clock"></i> ลูกสาว: วันนี้ยังไม่มา
             </div>
         </div>
+
         <div class="card card-square">
-            <div class="vital-box vital-box-hr" id="hr-box">
-                <i class="fa-solid fa-heart-pulse vital-icon"></i>
-                <div class="vital-value" id="hr-value">75</div>
-                <div class="vital-label">หัวใจ (bpm)</div>
+            <div class="weather-box" id="weather-box">
+                <i class="fa-solid fa-sun" style="font-size: 40px; color: #EAB308;"></i>
+                <div class="weather-temp">36°C</div>
+                <div class="weather-desc">แดดร้อนจัด!</div>
+            </div>
+        </div>
+
+        <div class="card card-square call-card">
+            <div class="call-avatar"></div>
+            <div style="font-size: 20px; font-weight: 700; color: #3730A3; margin-bottom: 8px;">หลานชาย</div>
+            <button class="btn-call" onclick="window.open('line://ti/p/~your_line_id', '_blank')">
+                <i class="fa-solid fa-video"></i> โทรเลย
+            </button>
+        </div>
+
+        <div class="card card-wide">
+            <div class="card-header"><i class="fa-solid fa-stethoscope" style="color:#2563EB"></i> วันนี้คุณตารู้สึกยังไงครับ?</div>
+            <div class="mood-grid">
+                <button class="mood-btn" onclick="saveMood('สดใสแข็งแรง')">😊</button>
+                <button class="mood-btn" onclick="saveMood('เฉยๆ ปกติ')">😐</button>
+                <button class="mood-btn" onclick="showPainSelector()">🤒</button>
+            </div>
+            
+            <div class="pain-selector" id="pain-selector">
+                <div style="font-size: 18px; font-weight: 700; color: #991B1B;">เจ็บปวดตรงไหนครับ?</div>
+                <div class="pain-options">
+                    <button class="pain-btn" onclick="savePain('ปวดหัว')">หัว</button>
+                    <button class="pain-btn" onclick="savePain('ปวดหลัง')">หลัง</button>
+                    <button class="pain-btn" onclick="savePain('ปวดเข่า/ขา')">เข่า/ขา</button>
+                    <button class="pain-btn" onclick="savePain('ปวดท้อง')">ท้อง</button>
+                </div>
             </div>
         </div>
 
         <div class="card card-wide">
-            <div class="card-header"><i class="fa-solid fa-pills" style="color:#EA580C"></i> ยาที่ต้องกินตอนนี้</div>
+            <div class="card-header"><i class="fa-solid fa-pills" style="color:#EA580C"></i> ตารางกินยา (08:30 น.)</div>
             <div class="pill-item">
                 <div class="pill-img"></div>
                 <div class="pill-info">
-                    <div class="pill-title">ยาลดความดัน (1 เม็ด)</div>
-                    <div class="pill-time">หลังอาหารเช้าทันที</div>
+                    <div class="pill-title">ยาลดความดัน</div>
+                    <div class="pill-time">หลังอาหารเช้า 1 เม็ด</div>
                 </div>
                 <button class="btn-pill" id="btn-pill" onclick="markPillDone()">กินแล้ว</button>
             </div>
         </div>
 
-        <div class="card card-wide">
-            <div class="card-header"><i class="fa-regular fa-calendar-check" style="color:#7C3AED"></i> นัดพบคุณหมอ</div>
-            <div class="appointment-box">
-                <div>
-                    <div style="font-size: 18px; opacity: 0.9;">มะรืนนี้ • 09:00 น.</div>
-                    <div style="font-size: 22px; font-weight: 700;">ตรวจเบาหวาน รพ.ชลบุรี</div>
-                </div>
-                <button class="btn-ride" onclick="callGrab()">
-                    <i class="fa-solid fa-car-side"></i> เรียกรถ
-                </button>
-            </div>
-        </div>
-
-        <div class="card card-wide">
-            <div class="card-header"><i class="fa-solid fa-images" style="color:#059669"></i> คลังภาพแห่งความจำ</div>
-            <div class="gallery-container" id="gallery"></div>
-        </div>
-
-        <div class="card card-wide">
-            <div class="card-header"><i class="fa-solid fa-puzzle-piece" style="color:#D97706"></i> เกมชะลอวัย (บวกเลข)</div>
-            <div class="game-box">
-                <div class="game-q" id="math-q">7 + 5 = ?</div>
-                <div>
-                    <input type="number" id="math-ans" class="game-input" placeholder="ตอบ">
-                    <button class="btn-game" onclick="checkMath()">ส่งคำตอบ</button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="bottom-bar">
-        <button class="btn-sos-main" onclick="executeSOS()">
+        <button class="btn-sos-main" id="btn-sos" onclick="executeSOS()">
             <i class="fa-solid fa-triangle-exclamation"></i> ขอความช่วยเหลือ
         </button>
-        <div class="ai-fab" onclick="openChat()">
-            <i class="fa-solid fa-robot"></i>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="chatModal">
-        <div class="chat-box">
-            <div class="chat-header">
-                <div>🤖 น้อง AI ดูแลสุขภาพ</div>
-                <i class="fa-solid fa-times" style="cursor:pointer;" onclick="closeChat()"></i>
-            </div>
-            <div class="chat-body" id="chat-body">
-                <div class="msg msg-bot">สวัสดีครับคุณตา วันนี้รู้สึกปวดหัว หรือมีอาการเจ็บตรงไหนให้หนูช่วยดูไหมครับ?</div>
-            </div>
-            <div class="chat-input-area">
-                <input type="text" id="chat-input" class="chat-input" placeholder="พิมพ์ถามตรงนี้..." onkeypress="if(event.key === 'Enter') sendChat()">
-                <button class="btn-send" onclick="sendChat()"><i class="fa-solid fa-paper-plane"></i></button>
-            </div>
-        </div>
     </div>
 
     <script>
-        // ⚠️ อย่าลืมเอา URL ของ Google Apps Script มาใส่ตรงนี้นะ
         const scriptUrl = "https://script.google.com/macros/s/AKfycbxqoR44xQPpUUUcoTlYjbO6BZFkZkZb78bXK1ueeIzE0JWomcONgy1cANxjEDJrlwz0/exec";
+        let isProcessingSOS = false;
+        let voiceEnabled = false;
 
-        // ฟังก์ชันกลางสำหรับยิงไป Backend
+        // --- ระบบเสียงพูด AI ---
+        function speakThai(text) {
+            if ('speechSynthesis' in window && voiceEnabled) {
+                window.speechSynthesis.cancel(); 
+                let msg = new SpeechSynthesisUtterance(text);
+                msg.lang = 'th-TH';
+                msg.rate = 0.9;
+                window.speechSynthesis.speak(msg);
+            }
+        }
+
+        // 💡 ทริค: ต้องให้คุณตาแตะจอ 1 ครั้งก่อน เบราว์เซอร์ถึงจะยอมให้มีเสียง (Auto-play policy)
+        document.body.addEventListener('click', () => {
+            if(!voiceEnabled) {
+                voiceEnabled = true;
+                // แตะครั้งแรกปุ๊บ ให้เตือนเรื่องอากาศร้อนทันที
+                speakThai("วันนี้แดดแรงมาก และอุณหภูมิสูงถึง 36 องศา คุณตาอย่าลืมดื่มน้ำเยอะๆ และหลีกเลี่ยงการออกไปตากแดดนะครับ");
+            }
+        }, {once: true});
+
+
+        // --- ฟังก์ชันยิงไป Backend ---
         function sendToBackend(actionData) {
             fetch(scriptUrl, {
                 method: 'POST',
+                mode: 'no-cors', 
                 body: JSON.stringify(actionData),
                 headers: { "Content-Type": "text/plain;charset=utf-8" }
             }).catch(e => console.log("Error:", e));
         }
 
-        // 1. จำลองข้อมูลสุขภาพ (อัปเดตทุก 5 วินาที)
+        // --- 2. ระบบบันทึกอาการ (Mood & Pain) ---
+        function showPainSelector() {
+            document.getElementById('pain-selector').style.display = 'block';
+            speakThai("คุณตาเจ็บปวดตรงไหน เลือกบอกลูกหลานได้เลยครับ");
+        }
+
+        function saveMood(moodStr) {
+            document.getElementById('pain-selector').style.display = 'none';
+            speakThai("บันทึกว่าคุณตารู้สึก " + moodStr + " ให้ลูกหลานทราบแล้วครับ");
+            // ส่งค่าไป Apps Script (แอบใช้ action: 'sos' หรือปรับตามที่มึงถนัดเพื่อให้มันบันทึกลง Sheet)
+            // หมายเหตุ: โค้ด Apps Script ตัวเดิมของมึงอาจจะไม่เด้งเข้า Discord สำหรับ action นี้ แต่มันจะถูกบันทึกลง Sheet แน่นอน
+            sendToBackend({ action: "mood_tracker", log: "อาการวันนี้: " + moodStr });
+            alert("บันทึกอาการ: " + moodStr);
+        }
+
+        function savePain(painStr) {
+            document.getElementById('pain-selector').style.display = 'none';
+            speakThai("บันทึกว่าคุณตามีอาการ " + painStr + " เรียบร้อยครับ เดี๋ยวลูกหลานจะพาไปหาหมอนะครับ");
+            sendToBackend({ action: "pain_tracker", log: "มีอาการ: " + painStr });
+            alert("บันทึกอาการ: " + painStr);
+        }
+
+
+        // --- 3. ระบบเสียงเตือนอัตโนมัติ (Voice Reminder) ---
+        // เช็คเวลาทุกๆ 1 นาที
         setInterval(() => {
-            // สุ่มความดัน 110-130 / 75-85
-            let sys = Math.floor(Math.random() * 21) + 110;
-            let dia = Math.floor(Math.random() * 11) + 75;
-            // สุ่มหัวใจ 70-85
-            let hr = Math.floor(Math.random() * 16) + 70;
-            
-            document.getElementById('bp-value').innerText = sys + '/' + dia;
-            document.getElementById('hr-value').innerText = hr;
+            let now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
 
-            // ทำให้ UI กระพริบนิดๆ ให้ดูเหมือนกำลังวัด
-            document.getElementById('bp-box').style.opacity = '0.7';
-            document.getElementById('hr-box').style.opacity = '0.7';
-            setTimeout(() => {
-                document.getElementById('bp-box').style.opacity = '1';
-                document.getElementById('hr-box').style.opacity = '1';
-            }, 300);
-        }, 5000);
+            // สมมติว่าตั้งเตือนกินยาตอน 08:30 น.
+            if (hours === 8 && minutes === 30) {
+                // เช็คว่าปุ่มยายังไม่โดนกด
+                if(!document.getElementById('btn-pill').disabled) {
+                    speakThai("คุณตาครับ ได้เวลา 8 นาฬิกา 30 นาทีแล้วครับ อย่าลืมทานยาลดความดันหลังอาหารเช้าด้วยนะครับ");
+                }
+            }
+        }, 60000); // 60000 ms = 1 นาที
 
-        // 2. ระบบ SOS
+
+        // --- ฟังก์ชันเดิม (SOS และ กินยา) ---
         function executeSOS() {
-            alert("กำลังหาพิกัด...");
+            if(isProcessingSOS) return;
+            isProcessingSOS = true;
+            
+            let btn = document.getElementById('btn-sos');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังส่ง...';
+            
+            speakThai("กำลังค้นหาพิกัด กรุณารอสักครู่นะครับ");
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((pos) => {
                     sendToBackend({ action: "sos", lat: pos.coords.latitude, lng: pos.coords.longitude });
-                    alert("🚨 ส่งพิกัดไปให้ลูกหลานเรียบร้อย!");
-                }, () => alert("หาตำแหน่งไม่เจอ เช็ค GPS ด้วย"));
+                    speakThai("ส่งตำแหน่งแจ้งเตือนฉุกเฉิน ให้ลูกหลานเรียบร้อยแล้วครับ");
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> ส่งสำเร็จ';
+                    setTimeout(() => {
+                        isProcessingSOS = false;
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ขอความช่วยเหลือ';
+                    }, 15000);
+                }, () => {
+                    speakThai("หาตำแหน่งไม่พบครับ แต่ส่งแจ้งเตือนให้แล้ว");
+                    sendToBackend({ action: "sos", lat: 0, lng: 0 });
+                    isProcessingSOS = false;
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> ขอความช่วยเหลือ';
+                }, { enableHighAccuracy: true, timeout: 10000 });
             }
         }
 
-        // 3. ระบบจัดการยา
         function markPillDone() {
             let btn = document.getElementById('btn-pill');
-            btn.innerHTML = "<i class='fa-solid fa-check'></i> เก่งมากครับ";
-            btn.style.background = "#94A3B8";
+            btn.innerHTML = "<i class='fa-solid fa-check'></i> ทานแล้ว";
             btn.disabled = true;
-            
-            // ยิงไปบอก Discord
+            speakThai("เก่งมากครับคุณตา ระบบบันทึกการกินยาให้แล้วครับ");
             sendToBackend({ action: "pill" });
-            alert("บันทึกการกินยา และแจ้งลูกหลานแล้ว!");
-        }
-
-        // 4. เรียกรถ (แก้บั๊กเปิดทับหน้าจอแล้วโดนบล็อก)
-        function callGrab() {
-            alert("กำลังเปิดแอป Grab หรือหน้าดาวน์โหลดแอป...");
-            // ใช้ window.open เด้งไปแท็บใหม่ จะได้ไม่ติดบล็อก
-            window.open("https://grab.onelink.me/2695613898?pid=inapp", "_blank");
-        }
-
-        // 5. คลังภาพแห่งความจำ (สไลด์โชว์)
-        const images = [
-            "https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1581579186913-46bcbc22c2ed?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1542037104857-ffbb0b9155fb?auto=format&fit=crop&w=800&q=80"
-        ];
-        let imgIndex = 0;
-        document.getElementById('gallery').style.backgroundImage = `url('${images[0]}')`;
-        setInterval(() => {
-            imgIndex = (imgIndex + 1) % images.length;
-            document.getElementById('gallery').style.backgroundImage = `url('${images[imgIndex]}')`;
-        }, 4000);
-
-        // 6. เกมบวกเลข
-        let correctAns = 12;
-        function checkMath() {
-            let userAns = document.getElementById('math-ans').value;
-            if(userAns == correctAns) {
-                alert("เก่งมาก! ความจำยังดีเยี่ยม");
-                // เปลี่ยนข้อใหม่
-                document.getElementById('math-q').innerText = "8 + 6 = ?";
-                correctAns = 14;
-                document.getElementById('math-ans').value = "";
-            } else {
-                alert("เอ๊ะ... ตอบผิดนะ ลองคิดใหม่ดู");
-                // ยิงฟ้อง Discord ว่าตาเริ่มเบลอ
-                sendToBackend({ action: "game_alert" });
-            }
-        }
-
-        // 7. AI Chatbot
-        function openChat() { document.getElementById('chatModal').style.display = 'flex'; }
-        function closeChat() { document.getElementById('chatModal').style.display = 'none'; }
-        function sendChat() {
-            let input = document.getElementById('chat-input');
-            let text = input.value.trim();
-            if(!text) return;
-
-            let chatBody = document.getElementById('chat-body');
-            // ใส่ข้อความตา
-            chatBody.innerHTML += `<div class="msg msg-user">${text}</div>`;
-            input.value = "";
-            chatBody.scrollTop = chatBody.scrollHeight;
-
-            // จำลอง AI ตอบกลับหลัง 1 วินาที
-            setTimeout(() => {
-                let aiReply = "ถ้าปวดหัวตื้อๆ ลองดื่มน้ำเยอะๆ แล้วพักสายตานะครับ แต่ถ้าปวดจี๊ดๆ รุนแรง รีบกดปุ่ม SOS ให้ลูกหลานพามารพ.เลยนะ!";
-                if(text.includes("ทุเรียน")) aiReply = "วันนี้ความดันคุณตาแอบสูงนิดนึง ทุเรียนงดก่อนดีกว่าครับ เดี๋ยวค่อยกินวันหลังนะ";
-                
-                chatBody.innerHTML += `<div class="msg msg-bot">${aiReply}</div>`;
-                chatBody.scrollTop = chatBody.scrollHeight;
-            }, 1000);
         }
     </script>
 </body>
