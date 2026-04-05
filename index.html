@@ -1,1 +1,436 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elderly Care - OriginOS Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #F2F5F9;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --primary: #4A8BFF;
+            --sos-color: #FF4A4A;
+            --text-main: #1D1D1F;
+            --text-sub: #86868B;
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --radius-large: 32px;
+            --radius-medium: 24px;
+            --radius-small: 16px;
+        }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Prompt', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #E2EBFA 0%, #FDFBFB 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px; /* Space for bottom nav */
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #ccc;
+            background-image: url('https://i.pravatar.cc/150?img=68');
+            background-size: cover;
+            border: 3px solid white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .greeting h1 {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .greeting p {
+            font-size: 14px;
+            color: var(--text-sub);
+        }
+
+        .btn-sos {
+            background: linear-gradient(135deg, #FF6B6B, #FF4A4A);
+            color: white;
+            border: none;
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 10px 20px rgba(255, 74, 74, 0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .btn-sos:active {
+            transform: scale(0.95);
+        }
+
+        /* Bento Grid Layout (OriginOS Style) */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-large);
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-wide {
+            grid-column: span 2;
+        }
+
+        /* Card Headers */
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .card-header i {
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        /* Pill Reminder */
+        .pill-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.9);
+            padding: 12px;
+            border-radius: var(--radius-medium);
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            gap: 12px;
+        }
+        
+        .pill-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: #FFE5E5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #FF4A4A;
+        }
+
+        .pill-info flex {
+            flex-direction: column;
+        }
+        
+        .pill-title { font-weight: 500; font-size: 16px;}
+        .pill-time { color: var(--text-sub); font-size: 14px;}
+
+        /* Vitals (Smartwatch) */
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .vital-box {
+            background: rgba(74, 139, 255, 0.1);
+            padding: 16px;
+            border-radius: var(--radius-medium);
+            text-align: center;
+        }
+
+        .vital-box.red { background: rgba(255, 74, 74, 0.1); }
+        .vital-box i { font-size: 24px; margin-bottom: 8px; }
+        .vital-box.blue i { color: var(--primary); }
+        .vital-box.red i { color: #FF4A4A; }
+        .vital-value { font-size: 22px; font-weight: 600; }
+        .vital-label { font-size: 12px; color: var(--text-sub); }
+
+        /* Appointments */
+        .appointment-box {
+            background: linear-gradient(135deg, #4A8BFF, #2E65CF);
+            color: white;
+            padding: 16px;
+            border-radius: var(--radius-medium);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-ride {
+            background: white;
+            color: #2E65CF;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-small);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        /* Family Connect */
+        .family-faces {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .face-btn {
+            min-width: 70px;
+            height: 90px;
+            background: white;
+            border-radius: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 6px;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            cursor: pointer;
+        }
+
+        .face-btn img {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 4px;
+        }
+
+        /* Apps & Games */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            text-align: center;
+        }
+
+        .app-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 20px;
+            margin: 0 auto 8px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+
+        .bg-yellow { background: linear-gradient(135deg, #FFD15C, #F9A826); }
+        .bg-purple { background: linear-gradient(135deg, #B57BFF, #8E2DE2); }
+        .bg-green { background: linear-gradient(135deg, #42E695, #3BB2B8); }
+
+        .app-label { font-size: 13px; font-weight: 500; }
+
+        /* AI Chatbot Floating */
+        .ai-bot {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            background: linear-gradient(135deg, #7F00FF, #E100FF);
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            box-shadow: 0 10px 25px rgba(225, 0, 255, 0.4);
+            cursor: pointer;
+            z-index: 100;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="user-info">
+            <div class="avatar"></div>
+            <div class="greeting">
+                <h1>สวัสดี, คุณตา</h1>
+                <p>วันนี้อากาศดี ไปเดินเล่นกันไหม?</p>
+            </div>
+        </div>
+        <button class="btn-sos" onclick="triggerSOS()">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            SOS
+        </button>
+    </div>
+
+    <div class="bento-grid">
+        
+        <div class="card card-wide">
+            <div class="card-header">
+                <i class="fa-solid fa-heart-pulse"></i> สุขภาพวันนี้ (จาก Smartwatch)
+            </div>
+            <div class="vitals-grid">
+                <div class="vital-box blue">
+                    <i class="fa-solid fa-droplet"></i>
+                    <div class="vital-value">120/80</div>
+                    <div class="vital-label">ความดัน (ปกติ)</div>
+                </div>
+                <div class="vital-box red">
+                    <i class="fa-solid fa-heart-crack"></i>
+                    <div class="vital-value">72</div>
+                    <div class="vital-label">อัตราเต้นหัวใจ (bpm)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-wide">
+            <div class="card-header">
+                <i class="fa-solid fa-pills" style="color:#FF9F4A"></i> ยาที่ต้องกินต่อไป
+            </div>
+            <div class="pill-item">
+                <div class="pill-img">
+                    <i class="fa-solid fa-capsules"></i>
+                </div>
+                <div class="pill-info" style="flex-grow: 1;">
+                    <div class="pill-title">ยาลดความดัน (เม็ดสีเหลือง)</div>
+                    <div class="pill-time">หลังอาหารเช้า • 08:30 น.</div>
+                </div>
+                <button style="border:none; background:#42E695; color:white; padding:10px 16px; border-radius:16px; font-weight:600;" onclick="takePill(this)">กินแล้ว</button>
+            </div>
+        </div>
+
+        <div class="card card-wide">
+            <div class="card-header">
+                <i class="fa-regular fa-calendar-check" style="color:#8E2DE2"></i> นัดหมายหมอ
+            </div>
+            <div class="appointment-box">
+                <div>
+                    <div style="font-size: 14px; opacity: 0.9;">พรุ่งนี้ • 09:00 น.</div>
+                    <div style="font-size: 18px; font-weight: 600;">ตรวจเบาหวาน รพ.ชลบุรี</div>
+                </div>
+                <button class="btn-ride" onclick="callRide()">
+                    <i class="fa-solid fa-car-side"></i> เรียกรถ
+                </button>
+            </div>
+        </div>
+
+        <div class="card card-wide">
+            <div class="card-header">
+                <i class="fa-solid fa-video" style="color:#42E695"></i> โทรหาลูกหลาน
+            </div>
+            <div class="family-faces">
+                <button class="face-btn" onclick="videoCall('ลูกสาว')">
+                    <img src="https://i.pravatar.cc/150?img=47" alt="ลูกสาว">
+                    <span style="font-size:12px; font-weight:500;">ลูกสาว</span>
+                </button>
+                <button class="face-btn" onclick="videoCall('หลานชาย')">
+                    <img src="https://i.pravatar.cc/150?img=11" alt="หลานชาย">
+                    <span style="font-size:12px; font-weight:500;">หลานชาย</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="card card-wide">
+            <div class="card-header">
+                <i class="fa-solid fa-puzzle-piece" style="color:#FFD15C"></i> คลายเหงา & ฝึกสมอง
+            </div>
+            <div class="apps-grid">
+                <div>
+                    <div class="app-icon bg-yellow"><i class="fa-solid fa-images"></i></div>
+                    <div class="app-label">คลังภาพ</div>
+                </div>
+                <div>
+                    <div class="app-icon bg-purple"><i class="fa-solid fa-gamepad"></i></div>
+                    <div class="app-label">เกมจับคู่</div>
+                </div>
+                <div>
+                    <div class="app-icon bg-green"><i class="fa-solid fa-users"></i></div>
+                    <div class="app-label">กลุ่มคุยเล่น</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="ai-bot" onclick="openAI()">
+        <i class="fa-solid fa-robot"></i>
+    </div>
+
+    <script>
+        // ปุ่ม SOS
+        function triggerSOS() {
+            // โค้ดส่ง GPS หรือต่อ API ไปยังระบบแจ้งเตือน Line ให้ครอบครัว
+            alert("🚨 กำลังส่งตำแหน่ง GPS และแจ้งเตือนฉุกเฉินไปยังลูกหลานทันที!");
+        }
+
+        // กินยาแล้ว
+        function takePill(btn) {
+            btn.innerHTML = "<i class='fa-solid fa-check'></i> เก่งมาก";
+            btn.style.background = "#ccc";
+            // โค้ดบันทึกลง Shared Log Database ว่าผู้สูงอายุกินยาแล้ว
+        }
+
+        // เรียกรถ
+        function callRide() {
+            // โค้ดเชื่อมต่อ Deep link ไปเปิดแอป Grab หรือ Bolt
+            alert("🚗 กำลังเปิดแอปเรียกรถ เพื่อเดินทางไป รพ.ชลบุรี...");
+        }
+
+        // วิดีโอคอล
+        function videoCall(name) {
+            alert("📹 กำลังเริ่มวิดีโอคอลหา " + name + "...");
+        }
+
+        // คุยกับ AI
+        function openAI() {
+            alert("🤖 น้อง AI พร้อมคุยเป็นเพื่อน หรือให้คำปรึกษาเรื่องสุขภาพเบื้องต้นแล้วจ้า!\n(ในอนาคตต่อ API ตัวประมวลผลพฤติกรรมวิเคราะห์ความผิดปกติที่นี่ได้เลย)");
+        }
+    </script>
+</body>
+</html>
