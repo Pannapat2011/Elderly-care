@@ -37,7 +37,6 @@
 
         .gallery-container { width: 100%; height: 180px; border-radius: var(--radius-medium); background-color: #E2E8F0; background-position: center; background-size: cover; background-image: url('https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=800&q=80'); }
 
-        /* ระบบเช็คอารมณ์ด้วย Emoji */
         .mood-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .mood-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F8FAFC; border: 2px solid #CBD5E1; border-radius: var(--radius-medium); padding: 15px 5px; cursor: pointer; transition: 0.2s; }
         .mood-btn:active { transform: scale(0.95); background: #E2E8F0; }
@@ -45,7 +44,6 @@
         .mood-emoji { font-size: 45px; line-height: 1; margin-bottom: 8px; }
         .mood-text { font-size: 16px; font-weight: 700; color: var(--text-sub); }
 
-        /* ปุ่มรวมความบันเทิง */
         .btn-music { width: 100%; background: #8B5CF6; color: white; border: none; padding: 16px; border-radius: var(--radius-medium); font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 4px 0 #6D28D9; }
         .btn-music:active { transform: translateY(4px); box-shadow: none; }
 
@@ -185,13 +183,12 @@
         function openMusic() {
             speakThai("เปิดเพลงให้ฟังแล้วครับ");
             document.getElementById('music-modal').style.display = 'flex';
-            // ใส่ลิงก์เพลย์ลิสต์เพลงสุนทราภรณ์ หรือธรรมะ (ใส่ autoplay ให้เล่นเอง)
             document.getElementById('yt-player').src = "https://www.youtube.com/embed/videoseries?list=PLB5A6513A5C59F9F8&autoplay=1"; 
         }
 
         function closeMusic() {
             document.getElementById('music-modal').style.display = 'none';
-            document.getElementById('yt-player').src = ""; // ปิดวิดีโอ
+            document.getElementById('yt-player').src = "";
         }
 
         function sendMood(btnElement, moodText) {
