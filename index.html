@@ -3,326 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elderly Care - Super App (ULTIMATE)</title>
+    <title>FamilyCare - Admin Dashboard (ALL-IN-ONE)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://meet.jit.si/external_api.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        @font-face { font-family: 'mainfront'; src: local('mainfront'); }
-        :root { --bg-color: #F8FAFC; --card-bg: #FFFFFF; --primary: #2563EB; --sos-color: #EF4444; --video-color: #10B981; --text-main: #0F172A; --text-sub: #475569; --radius-large: 28px; --radius-medium: 20px; --radius-small: 16px; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'mainfront', 'Prompt', sans-serif; }
-        body { background: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; padding-bottom: 150px; background-image: radial-gradient(#E2E8F0 1px, transparent 1px); background-size: 20px 20px; }
+        :root { --bg: #0F172A; --card: rgba(30, 41, 59, 0.9); --primary: #3B82F6; --success: #10B981; --danger: #EF4444; --warning: #F59E0B; --text: #F8FAFC; --sub: #94A3B8; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 20px; min-height: 100vh; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; background: linear-gradient(135deg, var(--primary), #3B82F6); padding: 20px; border-radius: var(--radius-large); color: white; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2); }
-        .greeting h1 { font-size: 32px; font-weight: 900; }
-        .greeting p { font-size: 18px; font-weight: 600; opacity: 0.9; }
-        .clock-box { text-align: right; }
-        .time-text { font-size: 36px; font-weight: 900; line-height: 1; }
-        .date-text { font-size: 16px; font-weight: 600; opacity: 0.9; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 20px 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
+        .title h1 { font-size: 28px; font-weight: 900; color: #38BDF8; }
         
-        .bento-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-        .card { background: var(--card-bg); border-radius: var(--radius-large); padding: 20px; border: 2px solid #E2E8F0; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
-        .card-wide { grid-column: span 2; }
-        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 24px; font-weight: 900; color: var(--text-main); border-bottom: 3px dashed #E2E8F0; padding-bottom: 10px;}
+        .status-badge { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.4); padding: 10px 20px; border-radius: 30px; }
+        .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 10px var(--danger); transition: 0.3s; }
+        .dot.online { background: var(--success); box-shadow: 0 0 15px var(--success); }
+
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .card { background: var(--card); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; }
+        .card-header { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: white; display: flex; align-items: center; gap: 10px; }
+
+        .btn { width: 100%; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; color: white; margin-bottom: 10px; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
+        .btn-primary { background: var(--primary); } .btn-warning { background: var(--warning); } .btn-success { background: var(--success); } .btn-danger { background: var(--danger); }
+
+        .form-control { width: 100%; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 14px; margin-bottom: 10px; }
+
+        .data-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); }
         
-        .pill-item { display: flex; align-items: center; background: linear-gradient(to right, #FFF7ED, #FFEDD5); padding: 20px; border-radius: var(--radius-medium); border: 2px solid #FDBA74; gap: 16px; }
-        .pill-img { width: 60px; height: 60px; border-radius: 16px; background: url('https://cdn-icons-png.flaticon.com/512/883/883356.png') center/cover; }
-        .pill-info { display: flex; flex-direction: column; flex-grow: 1; }
-        .pill-title { font-weight: 900; font-size: 24px; color: #9A3412; }
-        .btn-pill { border: none; background: #059669; color: white; padding: 15px 25px; border-radius: var(--radius-small); font-weight: 900; font-size: 20px; cursor: pointer; box-shadow: 0 4px 0 #047857; transition: 0.1s; }
-        .btn-pill:active { transform: translateY(4px); box-shadow: none; }
+        #video-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0F172A; z-index: 10000; flex-direction: column; }
+        #jitsi-container { flex-grow: 1; }
+        #gps-map { width: 100%; height: 250px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;}
 
-        .appointment-box { background: var(--primary); color: white; padding: 20px; border-radius: var(--radius-medium); display: flex; justify-content: space-between; align-items: center; }
-        .btn-ride { background: #FCD34D; color: #92400E; border: none; padding: 12px 20px; border-radius: var(--radius-small); font-weight: 900; font-size: 18px; cursor: pointer; display: flex; gap: 8px; box-shadow: 0 4px 0 #D97706; }
-
-        .gallery-container { width: 100%; height: 200px; border-radius: var(--radius-medium); background-color: #E2E8F0; background-position: center; background-size: cover; background-image: url('https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=800&q=80'); border: 4px solid white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-
-        .mood-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .mood-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F8FAFC; border: 3px solid #E2E8F0; border-radius: var(--radius-medium); padding: 20px 5px; cursor: pointer; transition: 0.2s; }
-        .mood-btn:active { transform: scale(0.95); background: #E2E8F0; }
-        .mood-btn.selected { background: #FEF3C7; border-color: #F59E0B; }
-        .mood-emoji { font-size: 50px; line-height: 1; margin-bottom: 10px; }
-        .mood-text { font-size: 18px; font-weight: 900; color: var(--text-sub); }
-
-        /* ปุ่มเกม */
-        .btn-game { width: 100%; background: linear-gradient(135deg, #EC4899, #BE185D); color: white; border: none; padding: 20px; border-radius: var(--radius-medium); font-size: 24px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 6px 0 #9D174D; margin-top: 10px; }
-        .btn-game:active { transform: translateY(6px); box-shadow: none; }
-
-        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); display: flex; gap: 15px; align-items: flex-end; z-index: 50; border-top: 2px solid #E2E8F0; }
-        .btn-call-main { flex-grow: 1; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; height: 100px; border-radius: 50px; font-size: 28px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 8px 0 #047857; text-transform: uppercase; }
-        .btn-sos-main { width: 120px; flex-shrink: 0; background: linear-gradient(135deg, #EF4444, #DC2626); color: white; border: none; height: 100px; border-radius: 50px; font-size: 20px; font-weight: 900; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; box-shadow: 0 8px 0 #991B1B; }
+        .voice-msg { background: rgba(59, 130, 246, 0.2); border-left: 4px solid var(--primary); padding: 10px; border-radius: 5px; margin-bottom: 10px; }
         
-        .btn-call-main:active, .btn-sos-main:active { transform: translateY(8px); box-shadow: none; }
-
-        #video-modal, #game-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0F172A; z-index: 10000; flex-direction: column; }
-        .video-header { padding: 20px; background: #1E293B; display: flex; justify-content: space-between; align-items: center; }
-        #jitsi-container { flex-grow: 1; width: 100%; }
-        
-        /* Game Styles */
-        #game-board { flex-grow: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 30px; background: #F1F5F9; align-content: center; justify-content: center; }
-        .memory-card { background: var(--primary); border-radius: 16px; height: 120px; display: flex; align-items: center; justify-content: center; font-size: 60px; cursor: pointer; transition: 0.3s; transform-style: preserve-3d; border: none; box-shadow: 0 8px 0 #1E3A8A; color: transparent; }
-        .memory-card.flipped { background: white; border: 4px solid var(--primary); color: initial; box-shadow: 0 4px 0 #94A3B8; transform: translateY(4px); pointer-events: none; }
-        .memory-card.matched { background: #D1FAE5; border-color: #10B981; color: initial; opacity: 0.8; pointer-events: none; }
+        #sos-alert { display: none; background: rgba(239, 68, 68, 0.2); border: 2px solid var(--danger); padding: 20px; border-radius: 15px; margin-bottom: 20px; animation: pulseRed 1s infinite; justify-content: space-between; align-items: center; }
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
     </style>
 </head>
 <body>
 
-    <div id="alarm-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(239, 68, 68, 0.9); z-index: 99999; flex-direction:column; justify-content:center; align-items:center; color:white; text-align:center; padding: 20px;">
-        <i class="fa-solid fa-bullhorn fa-beat" style="font-size: 100px; margin-bottom: 30px;"></i>
-        <h1 style="font-size: 40px; font-weight: 900; margin-bottom: 20px;">ประกาศจากลูกหลาน!</h1>
-        <p id="alarm-text" style="font-size: 28px; font-weight: 700; margin-bottom: 40px;"></p>
-        <button onclick="closeAlarm()" style="background:white; color:#EF4444; border:none; padding: 20px 40px; border-radius: 20px; font-size: 24px; font-weight: 900; box-shadow: 0 6px 0 #FCA5A5;">รับทราบครับ</button>
-    </div>
-
     <div id="video-modal">
-        <div class="video-header">
-            <span style="color: white; font-size: 24px; font-weight: 900;"><i class="fa-solid fa-video" style="color: #38BDF8;"></i> กำลังคุยกับลูกหลาน</span>
-            <button onclick="endVideoCall()" style="background: #EF4444; color: white; border: none; padding: 15px 30px; border-radius: 16px; font-size: 22px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 0 #991B1B;"><i class="fa-solid fa-phone-slash"></i> วางสาย</button>
+        <div style="padding: 20px; background: #1E293B; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 20px; font-weight: 700; color: white;"><i class="fa-solid fa-video"></i> VDO Call Command</span>
+            <button onclick="endVideoCall()" class="btn btn-danger" style="width: auto; margin:0;">ตัดสาย</button>
         </div>
         <div id="jitsi-container"></div>
     </div>
 
-    <div id="game-modal">
-        <div class="video-header" style="background: #BE185D;">
-            <span style="color: white; font-size: 24px; font-weight: 900;"><i class="fa-solid fa-brain"></i> เกมจับคู่ฝึกสมอง</span>
-            <button onclick="closeGame()" style="background: white; color: #BE185D; border: none; padding: 15px 30px; border-radius: 16px; font-size: 22px; font-weight: 900; cursor: pointer;"><i class="fa-solid fa-xmark"></i> เลิกเล่น</button>
-        </div>
-        <div id="game-board"></div>
-    </div>
-
     <div class="header">
-        <div class="greeting">
-            <h1>สวัสดีครับ คุณตา</h1>
-            <p><i class="fa-solid fa-satellite-dish fa-beat"></i> ระบบเชื่อมต่อลูกหลานทำงานปกติ</p>
-        </div>
-        <div class="clock-box">
-            <div class="time-text" id="clock-time">00:00</div>
-            <div class="date-text" id="clock-date">กำลังโหลด...</div>
+        <div class="title"><h1><i class="fa-solid fa-microchip"></i> FamilyCare Command</h1></div>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <button class="btn btn-success" style="width: auto; margin:0;" onclick="executeAction('family_checkin', 'เช็คอินมาหาแล้ว')"><i class="fa-solid fa-location-dot"></i> Check-in ลูกหลาน</button>
+            <div class="status-badge"><div class="dot" id="online-dot"></div><span id="online-text" style="font-weight: 700;">ออฟไลน์</span></div>
         </div>
     </div>
 
-    <div class="bento-grid">
-        <div class="card card-wide">
-            <div class="card-header"><i class="fa-solid fa-clipboard-question" style="color:#D97706"></i> วันนี้คุณตารู้สึกอย่างไรบ้างครับ?</div>
-            <div class="mood-grid">
-                <button class="mood-btn" onclick="sendMood(this, '😁 สบายดี')">
-                    <span class="mood-emoji">😁</span><span class="mood-text">สบายดีมาก</span>
-                </button>
-                <button class="mood-btn" onclick="sendMood(this, '🤒 ปวดเมื่อย/ไม่สบาย')">
-                    <span class="mood-emoji">🤒</span><span class="mood-text">ปวดเมื่อย</span>
-                </button>
-                <button class="mood-btn" onclick="sendMood(this, '😢 เหงา/อยากคุยด้วย')">
-                    <span class="mood-emoji">😢</span><span class="mood-text">เหงาจัง</span>
-                </button>
+    <div id="sos-alert">
+        <div><h2 style="color: var(--danger); font-size: 24px; font-weight: 900;"><i class="fa-solid fa-triangle-exclamation"></i> สัญญาณฉุกเฉิน (SOS)!</h2></div>
+        <button onclick="resolveSOS()" class="btn btn-danger" style="width: auto; margin: 0;"><i class="fa-solid fa-check-double"></i> เคลียร์เคส</button>
+    </div>
+
+    <div class="grid">
+        <div class="card" style="grid-column: span 2;">
+            <div class="card-header"><i class="fa-solid fa-desktop" style="color: var(--primary);"></i> สถานะคุณตาวันนี้ & แผนที่</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px;">
+                <div class="data-box"><p style="color: var(--sub);">ตื่นนอน</p><h3 id="disp-morning" style="color: var(--warning);">ยังไม่ตื่น</h3></div>
+                <div class="data-box"><p style="color: var(--sub);">ดื่มน้ำ</p><h3 id="disp-water" style="color: #0EA5E9;">0 แก้ว</h3></div>
+                <div class="data-box"><p style="color: var(--sub);">อารมณ์</p><h3 id="disp-mood" style="color: var(--success);">-</h3></div>
+                <div class="data-box"><p style="color: var(--sub);">การกินยา</p><h3 id="disp-pill" style="color: var(--primary);">-</h3></div>
+            </div>
+            <div id="gps-map"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fa-solid fa-walkie-talkie" style="color: var(--warning);"></i> สื่อสาร & ควบคุม</div>
+            <button class="btn btn-primary" onclick="startVideoCall()" style="background: #8B5CF6;"><i class="fa-solid fa-video"></i> บังคับเปิดกล้องคุณตา</button>
+            <div style="display: flex; gap: 5px; margin-bottom: 15px;">
+                <input type="text" id="intercom-msg" class="form-control" style="margin:0;" placeholder="พิมพ์เสียงประกาศ...">
+                <button class="btn btn-warning" style="width: auto; margin:0;" onclick="sendIntercom()"><i class="fa-solid fa-bullhorn"></i></button>
+            </div>
+            <div class="card-header" style="font-size: 16px;"><i class="fa-solid fa-microphone"></i> ข้อความเสียงจากคุณตา</div>
+            <div id="voice-log" style="height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
+                <div style="color: var(--sub); text-align: center;">ไม่มีข้อความเสียง</div>
             </div>
         </div>
 
-        <div class="card card-wide">
-            <div class="card-header"><i class="fa-solid fa-pills" style="color:#EA580C"></i> ตารางกินยาของคุณตา</div>
-            <div class="pill-item">
-                <div class="pill-img"></div>
-                <div class="pill-info">
-                    <div class="pill-title" id="pill-desc">กำลังโหลดข้อมูล...</div>
+        <div class="card" style="grid-column: span 3;">
+            <div class="card-header"><i class="fa-solid fa-pen-to-square" style="color: var(--success);"></i> อัปเดตข้อมูลให้หน้าจอคุณตา</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                <div>
+                    <input type="text" id="appoint-input" class="form-control" placeholder="นัดหมอ: รพ.ชลบุรี (15/05)">
+                    <button class="btn btn-success" onclick="saveData('appoint')">บันทึกนัดหมอ</button>
                 </div>
-                <button class="btn-pill" id="btn-pill" onclick="markPillDone()"><i class="fa-solid fa-check"></i> กินแล้ว</button>
+                <div>
+                    <input type="text" id="pill-input" class="form-control" placeholder="ตารางยา: ยาความดัน (เช้า)">
+                    <button class="btn btn-primary" onclick="saveData('pill')">บันทึกตารางยา</button>
+                </div>
+                <div>
+                    <textarea id="medical-input" class="form-control" rows="2" placeholder="Medical ID: กรุ๊ปเลือด O"></textarea>
+                    <button class="btn btn-danger" onclick="saveData('medical')">อัปเดต Medical ID</button>
+                </div>
+                <div style="grid-column: span 3; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
+                    <p style="color: var(--sub); font-size: 14px; margin-bottom: 10px;">อัปโหลดรูปภาพ (ใช้ ImgBB API ฟรี)</p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="imgbb-api" class="form-control" style="width: 30%; margin:0;" placeholder="ImgBB API Key">
+                        <input type="file" id="photo-file" class="form-control" style="width: 40%; margin:0;" accept="image/*">
+                        <button class="btn btn-warning" style="width: 30%; margin:0;" onclick="uploadToImgBB()" id="btn-upload">อัปโหลดรูปเข้าระบบ</button>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="card card-wide">
-            <div class="card-header"><i class="fa-solid fa-images" style="color:#059669"></i> รูปล่าสุดจากลูกหลาน</div>
-            <div class="gallery-container" id="gallery"></div>
-        </div>
-
-        <div class="card card-wide">
-            <button class="btn-game" onclick="openGame()">
-                <i class="fa-solid fa-gamepad fa-bounce"></i> เล่นเกมจับคู่ ฝึกสมอง!
-            </button>
-        </div>
-    </div>
-
-    <div class="bottom-bar">
-        <button class="btn-call-main" onclick="startVideoCall('คุณตา (VIP)')">
-            <i class="fa-solid fa-video fa-beat"></i> กดปุ่มนี้เพื่อคุยกับหลาน
-        </button>
-        <button class="btn-sos-main" id="btn-sos" onclick="executeSOS()">
-            <i class="fa-solid fa-triangle-exclamation" style="font-size: 32px;"></i> ฉุกเฉิน
-        </button>
     </div>
 
     <script>
-        const scriptUrl = "https://script.google.com/macros/s/AKfycby8enGt2JJA8RwqoyX4xcQXGjpDBVpGly5QKxM_WrR5hMJqEW2gJu_rCL6063BNXPY/exec";
-        let isProcessingSOS = false; let voiceEnabled = false;
-        let latestTimestamp = ""; // ตัวแปรเช็คอัปเดตใหม่
-        
-        // นาฬิกา
-        setInterval(() => {
-            let d = new Date();
-            document.getElementById('clock-time').innerText = d.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
-            document.getElementById('clock-date').innerText = d.toLocaleDateString('th-TH', {weekday: 'long', day: 'numeric', month: 'long'});
-        }, 1000);
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8enGt2JJA8RwqoyX4xcQXGjpDBVpGly5QKxM_WrR5hMJqEW2gJu_rCL6063BNXPY/exec";
+        const TOPIC = "familycare_all_in_one_123/";
+        const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+        let api = null, onlineTimeout, map, mapMarker;
 
-        function speakThai(text) {
-            if ('speechSynthesis' in window && voiceEnabled) {
-                window.speechSynthesis.cancel(); 
-                let msg = new SpeechSynthesisUtterance(text); msg.lang = 'th-TH'; msg.rate = 0.9; msg.volume = 1;
-                window.speechSynthesis.speak(msg);
+        window.onload = () => { initMap(); fetchGASData(); };
+
+        // --- MQTT ---
+        client.on('connect', () => { client.subscribe(TOPIC + 'elderly/#'); });
+        client.on('message', (topic, message) => {
+            const action = topic.split('/').pop(); const msg = message.toString();
+            if (action === 'heartbeat') {
+                document.getElementById('online-dot').classList.add('online'); document.getElementById('online-text').innerText = "ออนไลน์ 🟢";
+                clearTimeout(onlineTimeout);
+                onlineTimeout = setTimeout(() => { document.getElementById('online-dot').classList.remove('online'); document.getElementById('online-text').innerText = "ออฟไลน์ 🔴"; }, 6000);
             }
-        }
+            else if (action === 'sos') { document.getElementById('sos-alert').style.display = 'flex'; new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg').play(); fetchGASData(); }
+            else if (action === 'voice_msg') { alert("🎙️ มีข้อความเสียงใหม่จากคุณตา!"); fetchGASData(); }
+            else if (action === 'ping_update') { fetchGASData(); }
+        });
 
-        document.body.addEventListener('click', () => { voiceEnabled = true; }, {once: true});
+        function sendMQTTPing(type, payload = "") { client.publish(TOPIC + 'admin/' + type, payload); }
+        function sendIntercom() { let msg = document.getElementById('intercom-msg').value; if(msg) { sendMQTTPing('intercom', msg); document.getElementById('intercom-msg').value = ''; } }
 
-        // ------------------ ระบบ Video Call ------------------
-        let api = null;
-        function startVideoCall(userName) {
-            speakThai("กำลังเปิดกล้อง เพื่อคุยกับลูกหลานครับ");
-            document.getElementById('video-modal').style.display = 'flex';
-            const domain = 'meet.jit.si';
-            const options = {
-                roomName: 'FamilyCare_PrivateRoom_EXTREME99', width: '100%', height: '100%',
-                parentNode: document.querySelector('#jitsi-container'), userInfo: { displayName: userName },
-                interfaceConfigOverwrite: { TOOLBAR_BUTTONS: ['microphone', 'camera'], SHOW_JITSI_WATERMARK: false }
-            };
-            api = new JitsiMeetExternalAPI(domain, options);
-            api.addListener('videoConferenceLeft', () => { endVideoCall(); });
-        }
-
-        function endVideoCall() {
-            if(api) { api.dispose(); api = null; }
-            document.getElementById('video-modal').style.display = 'none';
-            speakThai("วางสายเรียบร้อยแล้วครับ");
-        }
-
-        // ------------------ เกมจับคู่ ฝึกสมอง ------------------
-        let gameCards = ['🍎','🍎','🍌','🍌','🍇','🍇','🍉','🍉', '🐶','🐶','🐱','🐱'];
-        let firstCard = null, secondCard = null, matchedPairs = 0, lockBoard = false;
-
-        function openGame() {
-            speakThai("มาเล่นเกมฝึกสมองกันครับ หาภาพที่เหมือนกันให้เจอนะครับ");
-            document.getElementById('game-modal').style.display = 'flex';
-            initGame();
-        }
-        function closeGame() { document.getElementById('game-modal').style.display = 'none'; }
-        
-        function initGame() {
-            const board = document.getElementById('game-board'); board.innerHTML = '';
-            gameCards.sort(() => 0.5 - Math.random()); // สลับไพ่
-            matchedPairs = 0; firstCard = null; secondCard = null; lockBoard = false;
-            
-            gameCards.forEach((emoji, index) => {
-                let card = document.createElement('button');
-                card.classList.add('memory-card');
-                card.dataset.emoji = emoji;
-                card.onclick = () => flipCard(card);
-                board.appendChild(card);
-            });
-        }
-
-        function flipCard(card) {
-            if (lockBoard || card === firstCard || card.classList.contains('matched')) return;
-            card.classList.add('flipped'); card.innerText = card.dataset.emoji;
-
-            if (!firstCard) { firstCard = card; return; }
-            secondCard = card; lockBoard = true;
-            checkForMatch();
-        }
-
-        function checkForMatch() {
-            let isMatch = firstCard.dataset.emoji === secondCard.dataset.emoji;
-            if (isMatch) {
-                firstCard.classList.add('matched'); secondCard.classList.add('matched');
-                speakThai("เก่งมากครับ");
-                matchedPairs++;
-                if(matchedPairs === gameCards.length / 2) {
-                    setTimeout(() => { speakThai("ยอดเยี่ยมมากครับ คุณตาชนะแล้ว"); alert("🎉 ชนะแล้ว! เก่งมากๆ ครับ!"); initGame(); }, 500);
-                }
-                resetBoard();
-            } else {
-                setTimeout(() => {
-                    firstCard.classList.remove('flipped'); firstCard.innerText = '';
-                    secondCard.classList.remove('flipped'); secondCard.innerText = '';
-                    resetBoard();
-                }, 1000);
-            }
-        }
-        function resetBoard() { [firstCard, secondCard, lockBoard] = [null, null, false]; }
-
-
-        // ------------------ ระบบรับข้อมูลและเสียงเตือน ------------------
-        function sendMood(btnElement, moodText) {
-            document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
-            btnElement.classList.add('selected');
-            speakThai("บอกลูกหลานให้แล้วครับ ว่า" + moodText);
-            sendToBackend({ action: "mood", detail: moodText });
-        }
-
-        async function fetchAdminUpdates() {
+        // --- GAS Data ---
+        async function fetchGASData() {
             try {
-                const response = await fetch(scriptUrl); const result = await response.json();
-                if (result.status === "success" && result.data.length > 0) {
-                    const rows = result.data.reverse(); 
-                    
-                    // เช็คแจ้งเตือนเสียงแบบ Real-time
-                    let newestEventTime = rows[0][0]; // timestamp ของช่องแรกสุด
-                    if (latestTimestamp !== "" && newestEventTime !== latestTimestamp) {
-                        let newAction = rows[0][1]; let newDetail = rows[0][2];
-                        if (newAction === "alarm") {
-                            triggerVoiceAlarm(newDetail);
-                        }
-                    }
-                    latestTimestamp = newestEventTime;
+                const res = await fetch(SCRIPT_URL); const result = await res.json();
+                if (result.status === "success") {
+                    let d = result.data;
+                    document.getElementById('disp-morning').innerText = d.morningCheckin ? "ตื่นแล้ว ☀️" : "ยังไม่ตื่น";
+                    document.getElementById('disp-morning').style.color = d.morningCheckin ? "var(--success)" : "var(--warning)";
+                    document.getElementById('disp-water').innerText = d.waterCount + " แก้ว";
+                    document.getElementById('disp-mood').innerText = d.latestMood.replace("อารมณ์: ", "");
+                    document.getElementById('disp-pill').innerText = d.latestPill.replace("ตารางยา: ", "");
 
-                    let foundPill = false, foundPhoto = false;
-                    for (let row of rows) {
-                        let action = row[1], detail = row[2];
-                        if (action === "save_pill" && !foundPill) { document.getElementById('pill-desc').innerText = detail.replace("ตารางยา: ", ""); foundPill = true; }
-                        if (action === "save_photo" && !foundPhoto) { document.getElementById('gallery').style.backgroundImage = `url('${detail.replace("อัปเดตแกลเลอรี่: ", "")}')`; foundPhoto = true; }
+                    let voiceBox = document.getElementById('voice-log');
+                    if (d.voiceMsgs.length > 0) {
+                        voiceBox.innerHTML = "";
+                        d.voiceMsgs.forEach(v => { voiceBox.innerHTML += `<div class="voice-msg"><span style="color:var(--sub);font-size:12px;">${v.time}</span> <br><b>${v.msg}</b></div>`; });
                     }
-                    if(!foundPill) document.getElementById('pill-desc').innerText = "ยังไม่มีตารางยา";
+
+                    if (d.isSosActive) {
+                        document.getElementById('sos-alert').style.display = 'flex';
+                        let match = d.sosDetail.match(/q=([\d.-]+),([\d.-]+)/);
+                        if(match) updateMapLocation(parseFloat(match[1]), parseFloat(match[2]));
+                    } else {
+                        document.getElementById('sos-alert').style.display = 'none';
+                        if(mapMarker) { map.removeLayer(mapMarker); mapMarker = null; }
+                        map.setView([13.7563, 100.5018], 5);
+                    }
                 }
+            } catch(e) {}
+        }
+
+        async function executeAction(action, details) {
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: action, details: details }), headers: { "Content-Type": "text/plain;charset=utf-8" }});
+                sendMQTTPing('ping_update'); fetchGASData(); alert("บันทึกสำเร็จ!");
             } catch (e) {}
         }
 
-        window.onload = () => { fetchAdminUpdates(); setInterval(fetchAdminUpdates, 5000); /* โหลดถี่ขึ้นเพื่อจับเสียงเตือนไวขึ้น */ };
-
-        function triggerVoiceAlarm(message) {
-            // เล่นเสียงและโชว์หน้าจอแดง
-            document.getElementById('alarm-text').innerText = message;
-            document.getElementById('alarm-overlay').style.display = 'flex';
-            speakThai(message);
+        function saveData(type) {
+            if(type === 'appoint') { let v = document.getElementById('appoint-input').value; if(v) { executeAction('save_appointment', v); document.getElementById('appoint-input').value = ''; } } 
+            else if(type === 'pill') { let v = document.getElementById('pill-input').value; if(v) { executeAction('save_pill', v); document.getElementById('pill-input').value = ''; } } 
+            else if(type === 'medical') { let v = document.getElementById('medical-input').value; if(v) { executeAction('medical_update', v); document.getElementById('medical-input').value = ''; } } 
         }
 
-        function closeAlarm() {
-            document.getElementById('alarm-overlay').style.display = 'none';
+        function resolveSOS() { executeAction('sos_resolved', 'เคลียร์เคสฉุกเฉินแล้ว'); }
+
+        // --- Map & ImgBB ---
+        function initMap() { map = L.map('gps-map').setView([13.7563, 100.5018], 5); L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map); }
+        function updateMapLocation(lat, lng) {
+            if(!map) return; map.setView([lat, lng], 16); if(mapMarker) map.removeLayer(mapMarker);
+            let cIcon = L.divIcon({ className: '', html: "<div style='background:#EF4444; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow: 0 0 15px #EF4444; animation: pulseRed 1.5s infinite;'></div>", iconSize: [20, 20] });
+            mapMarker = L.marker([lat, lng], {icon: cIcon}).addTo(map).bindPopup('<b style="color:black;">พิกัดฉุกเฉิน!</b>').openPopup();
         }
 
-        function sendToBackend(actionData) {
-            fetch(scriptUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(actionData), headers: { "Content-Type": "text/plain;charset=utf-8" }});
+        async function uploadToImgBB() {
+            const apiKey = document.getElementById('imgbb-api').value; const fileInput = document.getElementById('photo-file');
+            if(!apiKey || fileInput.files.length === 0) return alert("ใส่ API Key และเลือกรูปก่อน!");
+            document.getElementById('btn-upload').innerText = "กำลังอัปโหลด...";
+            let formData = new FormData(); formData.append('image', fileInput.files[0]);
+            try {
+                let res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, { method: 'POST', body: formData });
+                let data = await res.json();
+                if(data.success) { executeAction('save_photo', data.data.url); document.getElementById('photo-file').value = ''; } 
+                else { alert("อัปโหลดไม่สำเร็จ"); }
+            } catch(e) { alert("Error uploading"); }
+            document.getElementById('btn-upload').innerText = "อัปโหลดรูปลงระบบ";
         }
 
-        function executeSOS() {
-            if(isProcessingSOS) return;
-            isProcessingSOS = true; let btn = document.getElementById('btn-sos');
-            btn.style.opacity = '0.7'; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            speakThai("กำลังส่งตำแหน่ง ไปหาลูกหลานครับ");
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    sendToBackend({ action: "sos", lat: pos.coords.latitude, lng: pos.coords.longitude });
-                    btn.innerHTML = '<i class="fa-solid fa-check"></i>'; setTimeout(() => { resetSOS(btn); }, 15000);
-                }, (err) => {
-                    sendToBackend({ action: "sos", lat: 0, lng: 0 }); resetSOS(btn);
-                }, { enableHighAccuracy: true, timeout: 10000 });
-            }
+        function startVideoCall() {
+            sendMQTTPing('video', 'start'); document.getElementById('video-modal').style.display = 'flex';
+            api = new JitsiMeetExternalAPI('meet.jit.si', { roomName: 'FamilyCare_AllInOne_888', width: '100%', height: '100%', parentNode: document.querySelector('#jitsi-container'), userInfo: { displayName: 'ผู้ดูแล' } });
         }
-
-        function resetSOS(btn) { isProcessingSOS = false; btn.style.opacity = '1'; btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="font-size: 32px;"></i> ฉุกเฉิน'; }
-
-        function markPillDone() {
-            let btn = document.getElementById('btn-pill');
-            btn.innerHTML = "<i class='fa-solid fa-check-double'></i> กินแล้ว"; btn.style.background = "#94A3B8"; btn.style.boxShadow = "none"; btn.disabled = true;
-            speakThai("เก่งมากครับ ระบบบันทึกให้แล้วครับ");
-            sendToBackend({ action: "pill" });
-        }
+        function endVideoCall() { if(api) api.dispose(); document.getElementById('video-modal').style.display = 'none'; sendMQTTPing('video', 'stop'); }
     </script>
 </body>
 </html>
