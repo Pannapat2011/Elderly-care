@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>หน้าจอผู้สูงอายุ (Ultimate V.Final)</title>
+    <title>หน้าจอผู้สูงอายุ (Ultimate UI + Cloud)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -14,74 +14,89 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; user-select: none; }
         body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
 
+        /* หน้า Login / QR Code */
         #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
-        .qr-box { background: white; padding: 15px; border-radius: 20px; margin: 20px 0; border: 5px solid var(--primary); }
+        .qr-box { background: white; padding: 20px; border-radius: 20px; margin: 20px 0; border: 5px solid var(--primary); box-shadow: 0 10px 30px rgba(56, 189, 248, 0.2); }
         
-        #main-dashboard { flex: 1; padding: 20px; display: none; flex-direction: column; gap: 15px; max-width: 1200px; margin: 0 auto; width: 100%; overflow-y: auto; }
+        /* หน้าหลัก Dashboard */
+        #main-dashboard { flex: 1; padding: 20px; display: none; flex-direction: column; gap: 20px; max-width: 1200px; margin: 0 auto; width: 100%; overflow-y: auto; }
 
-        .profile-bar { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--primary); padding: 10px 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--primary); }
-        .btn-logout { background: rgba(255,255,255,0.1); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; transition: 0.2s;}
+        .profile-bar { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--primary); padding: 12px 20px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; color: var(--primary); font-weight: 600;}
+        .btn-logout { background: rgba(255,255,255,0.1); color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-size: 14px; transition: 0.2s;}
         .btn-logout:active { transform: scale(0.95); background: var(--danger); }
 
-        .header { text-align: center; margin-bottom: 5px; }
-        .clock { font-size: clamp(3rem, 10vw, 6rem); font-weight: 800; color: var(--primary); line-height: 1; text-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
-        .date-text { font-size: clamp(1rem, 4vw, 1.5rem); color: var(--warning); margin-top: 5px; font-weight: 600; }
-        .weather-text { font-size: clamp(0.9rem, 3vw, 1.2rem); color: var(--sub); margin-top: 5px; }
+        .header { text-align: center; margin-bottom: 10px; }
+        .clock { font-size: clamp(3.5rem, 10vw, 7rem); font-weight: 800; color: var(--primary); line-height: 1; text-shadow: 0 0 25px rgba(56, 189, 248, 0.4); }
+        .date-text { font-size: clamp(1.2rem, 4vw, 1.8rem); color: var(--warning); margin-top: 5px; font-weight: 600; }
+        .weather-text { font-size: clamp(1rem, 3vw, 1.4rem); color: var(--sub); margin-top: 5px; }
 
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .card { background: var(--card); border-radius: 20px; padding: 20px; border: 2px solid rgba(255,255,255,0.05); display: flex; flex-direction: column;}
-        .card-header { font-size: clamp(1rem, 3vw, 1.4rem); color: var(--sub); font-weight: 600; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: var(--card); border-radius: 20px; padding: 25px; border: 2px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; box-shadow: 0 10px 20px rgba(0,0,0,0.2);}
+        .card-header { font-size: clamp(1.2rem, 3vw, 1.6rem); color: var(--sub); font-weight: 600; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
         
-        .pill-list { display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto; }
-        .pill-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 10px 15px; border-radius: 12px; border-left: 4px solid var(--warning); }
-        .pill-name { font-size: clamp(1rem, 4vw, 1.4rem); font-weight: 800; color: white; }
-        .btn-take-pill { background: var(--success); color: white; border: none; padding: 8px 15px; font-size: clamp(0.9rem, 3vw, 1.2rem); font-weight: 800; border-radius: 8px; cursor: pointer; transition: 0.2s;}
-        .btn-take-pill:active { transform: translateY(4px); }
-        .btn-take-pill.taken { background: #475569; color: #94A3B8; pointer-events: none; border-left-color: #475569;}
+        .pill-list { display: flex; flex-direction: column; gap: 12px; max-height: 220px; overflow-y: auto; }
+        .pill-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 15px 20px; border-radius: 15px; border-left: 5px solid var(--warning); }
+        .pill-name { font-size: clamp(1.1rem, 4vw, 1.5rem); font-weight: 800; color: white; }
+        .btn-take-pill { background: var(--success); color: white; border: none; padding: 10px 20px; font-size: clamp(1rem, 3vw, 1.3rem); font-weight: 800; border-radius: 10px; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 0 #059669;}
+        .btn-take-pill:active { transform: translateY(5px); box-shadow: none;}
+        .btn-take-pill.taken { background: #475569; color: #94A3B8; pointer-events: none; border-left-color: #475569; box-shadow: none;}
 
-        .appoint-val { font-size: clamp(1.2rem, 4vw, 1.6rem); font-weight: 800; color: white; line-height: 1.4; padding: 15px; background: rgba(56,189,248,0.1); border-radius: 15px; border: 2px solid var(--primary); flex: 1;}
+        .appoint-val { font-size: clamp(1.4rem, 4vw, 1.8rem); font-weight: 800; color: white; line-height: 1.5; padding: 20px; background: rgba(56,189,248,0.1); border-radius: 15px; border: 2px solid var(--primary); flex: 1; display: flex; align-items: center;}
 
-        .action-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: auto; padding-bottom: 10px; }
-        .btn-action { background: var(--card); border: 2px solid rgba(255,255,255,0.05); border-radius: 15px; padding: 15px 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: clamp(0.8rem, 2.5vw, 1.2rem); font-weight: 800; cursor: pointer; color: white; text-align: center; transition: 0.2s;}
+        /* ปุ่ม Action Bar ด้านล่าง */
+        .action-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: auto; padding-bottom: 15px; }
+        .btn-action { background: var(--card); border: 2px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-size: clamp(0.9rem, 2.5vw, 1.3rem); font-weight: 800; cursor: pointer; color: white; text-align: center; transition: 0.2s; box-shadow: 0 8px 15px rgba(0,0,0,0.2);}
         .btn-action:active { transform: scale(0.95); background: rgba(0,0,0,0.5); }
-        .btn-action i { font-size: clamp(1.5rem, 5vw, 2.5rem); }
+        .btn-action i { font-size: clamp(2rem, 5vw, 3rem); }
         .btn-grab { background: #00B14F; border: none; }
+        .btn-game { background: #F43F5E; border: none; }
         .btn-sos { background: linear-gradient(135deg, #EF4444, #B91C1C); border: none; }
 
-        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } .action-bar { grid-template-columns: repeat(3, 1fr); } .btn-sos { grid-column: span 3; padding: 20px; font-size: 1.5rem; } .profile-bar { flex-direction: column; gap: 10px; align-items: flex-start; } .btn-logout { align-self: flex-end; } }
+        @media (max-width: 768px) { 
+            .grid-2 { grid-template-columns: 1fr; } 
+            .action-bar { grid-template-columns: repeat(3, 1fr); gap: 10px;} 
+            .btn-sos { grid-column: span 3; padding: 20px; font-size: 1.5rem; flex-direction: row;} 
+            .profile-bar { flex-direction: column; gap: 10px; align-items: flex-start; } 
+            .btn-logout { align-self: flex-end; } 
+        }
 
-        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; padding: 20px;}
-        .modal { background: var(--card); padding: 30px; border-radius: 20px; text-align: center; max-width: 500px; width: 100%; border: 3px solid var(--warning); }
-        .btn-ack { background: var(--warning); color: black; border: none; padding: 15px 30px; font-size: 1.2rem; font-weight: 800; border-radius: 12px; margin-top: 20px; width: 100%; cursor: pointer;}
-        #screensaver { display: none; position: fixed; inset: 0; z-index: 900; background-color: black; background-size: cover; background-position: center; }
+        /* Overlays (Popups) */
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(5px);}
+        .modal { background: var(--card); padding: 40px; border-radius: 25px; text-align: center; max-width: 600px; width: 100%; border: 4px solid var(--warning); box-shadow: 0 20px 50px rgba(0,0,0,0.5);}
+        .btn-ack { background: var(--warning); color: black; border: none; padding: 15px 30px; font-size: 1.4rem; font-weight: 800; border-radius: 15px; margin-top: 20px; width: 100%; cursor: pointer; transition: 0.2s;}
+        .btn-ack:active { transform: scale(0.95); }
+        #screensaver { display: none; position: fixed; inset: 0; z-index: 900; background-color: black; background-size: contain; background-repeat: no-repeat; background-position: center; }
         
-        #youtube-container iframe { width: 100%; height: 60vh; border-radius: 15px; border: none; }
-        #game-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px;}
-        .memory-card { background: var(--primary); border-radius: 10px; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer; border: none; color: transparent; transition: 0.3s;}
-        .memory-card.flipped { background: white; border: 3px solid var(--primary); color: initial; transform: translateY(4px);}
-        .memory-card.matched { background: var(--success); border-color: #059669; color: initial; pointer-events: none; }
+        #youtube-container iframe { width: 100%; height: 50vh; border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
+        
+        /* เกมฝึกสมอง */
+        #game-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 20px;}
+        .memory-card { background: var(--primary); border-radius: 15px; height: 90px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; cursor: pointer; border: none; color: transparent; transition: 0.3s; box-shadow: 0 5px 0 #0284C7;}
+        .memory-card.flipped { background: white; border: 4px solid var(--primary); color: initial; transform: translateY(5px); box-shadow: none;}
+        .memory-card.matched { background: var(--success); border-color: #059669; color: initial; pointer-events: none; box-shadow: none;}
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
-        <i class="fa-solid fa-mobile-screen-button" style="font-size: 60px; color: var(--primary);"></i>
-        <h2 style="margin: 20px 0;">ลงทะเบียนเครื่องรับข้อมูล</h2>
-        <p style="color: #94A3B8; font-size: 16px;">ให้ลูกหลานสแกน QR Code เพื่อเชื่อมต่อ</p>
+        <i class="fa-solid fa-mobile-screen-button" style="font-size: 80px; color: var(--primary); margin-bottom: 20px;"></i>
+        <h1 style="margin-bottom: 10px;">ลงทะเบียนเครื่อง</h1>
+        <p style="color: #94A3B8; font-size: 18px;">ให้ลูกหลานเปิดแอปแล้วสแกน QR Code นี้</p>
         <div class="qr-box" id="qrcode"></div>
-        <h4 id="display-id" style="color: var(--primary); letter-spacing: 2px;"></h4>
-        <p style="color: var(--success); margin-top: 15px;"><i class="fa-solid fa-circle-notch fa-spin"></i> รอการยืนยัน...</p>
+        <h2 id="display-id" style="color: var(--primary); letter-spacing: 2px;"></h2>
+        <p style="color: var(--success); margin-top: 20px; font-size: 18px;"><i class="fa-solid fa-circle-notch fa-spin"></i> รอการเชื่อมต่อ...</p>
     </div>
 
     <div id="screensaver"></div>
-    <div id="alert-overlay" class="overlay"><div class="modal"><i class="fa-solid fa-bell fa-shake" style="font-size: 60px; color: var(--warning);"></i><div style="font-size: 2rem; font-weight: 800; margin: 20px 0;" id="alert-msg">ข้อความใหม่</div><button class="btn-ack" onclick="acknowledgeAlert()">รับทราบครับ</button></div></div>
-    <div id="youtube-overlay" class="overlay"><div class="modal" style="border-color: #FF0000; max-width: 800px;"><h2 style="color: white; margin-bottom: 15px;"><i class="fa-brands fa-youtube" style="color: #FF0000;"></i> วีดีโอจากลูกหลาน</h2><div id="youtube-container"></div><button class="btn-ack" onclick="closeYouTube()" style="background: var(--danger); color: white;">ปิดวีดีโอ</button></div></div>
-    <div id="game-overlay" class="overlay"><div class="modal" style="border-color: var(--primary);"><h2 style="color: white;"><i class="fa-solid fa-brain"></i> เกมฝึกสมอง</h2><div id="game-board"></div><button class="btn-ack" onclick="closeGame()" style="background: var(--danger); color: white;">เลิกเล่น</button></div></div>
+    <div id="alert-overlay" class="overlay"><div class="modal"><i class="fa-solid fa-bell fa-shake" style="font-size: 80px; color: var(--warning);"></i><div style="font-size: 2.5rem; font-weight: 800; margin: 30px 0; line-height: 1.3;" id="alert-msg">ข้อความใหม่</div><button class="btn-ack" onclick="acknowledgeAlert()">รับทราบครับ</button></div></div>
+    <div id="youtube-overlay" class="overlay"><div class="modal" style="border-color: #FF0000; max-width: 800px;"><h2 style="color: white; margin-bottom: 20px;"><i class="fa-brands fa-youtube" style="color: #FF0000;"></i> วีดีโอจากลูกหลาน</h2><div id="youtube-container"></div><button class="btn-ack" onclick="closeYouTube()" style="background: var(--danger); color: white;">ปิดวีดีโอ</button></div></div>
+    <div id="game-overlay" class="overlay"><div class="modal" style="border-color: var(--primary); max-width: 600px;"><h2 style="color: white; font-size: 2rem;"><i class="fa-solid fa-brain"></i> เกมฝึกสมอง</h2><div id="game-board"></div><button class="btn-ack" onclick="closeGame()" style="background: var(--danger); color: white;">เลิกเล่น</button></div></div>
     <div id="video-overlay" class="overlay" style="padding:0;"><div id="jitsi-container" style="width:100%; height:100%;"></div></div>
 
     <div id="main-dashboard">
-        <div class="profile-bar" id="profile-display" style="display: none;">
-            <div><i class="fa-solid fa-user-check"></i> <span id="elder-name-display">รอข้อมูลส่วนตัว...</span></div>
+        
+        <div class="profile-bar" id="profile-display">
+            <div><i class="fa-solid fa-user-check"></i> <span id="elder-name-display">กำลังดึงข้อมูล...</span></div>
             <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> รีเซ็ตเครื่อง</button>
         </div>
 
@@ -93,11 +108,11 @@
 
         <div class="grid-2">
             <div class="card">
-                <div class="card-header"><i class="fa-solid fa-pills" style="color:var(--warning);"></i> ยาที่ต้องทาน</div>
+                <div class="card-header"><i class="fa-solid fa-pills" style="color:var(--warning);"></i> ยาที่ต้องทานวันนี้</div>
                 <div class="pill-list" id="pill-container"></div>
             </div>
             <div class="card">
-                <div class="card-header"><i class="fa-regular fa-calendar-check" style="color:var(--primary);"></i> นัดหมาย</div>
+                <div class="card-header"><i class="fa-regular fa-calendar-check" style="color:var(--primary);"></i> นัดหมายหมอครั้งถัดไป</div>
                 <div class="appoint-val" id="disp-appoint">ไม่มีนัดหมาย</div>
             </div>
         </div>
@@ -106,12 +121,13 @@
             <div class="btn-action" onclick="drinkWater()"><i class="fa-solid fa-glass-water" style="color: var(--primary);"></i><span id="water-count">ดื่มน้ำ (0)</span></div>
             <div class="btn-action btn-grab" onclick="orderFood()"><i class="fa-solid fa-utensils"></i><span>สั่งอาหาร</span></div>
             <div class="btn-action" onclick="toggleMusic()"><i class="fa-solid fa-radio" style="color: #8B5CF6;"></i><span>ฟังเพลง</span></div>
-            <div class="btn-action" onclick="openGame()" style="background: #F43F5E;"><i class="fa-solid fa-gamepad"></i><span>ฝึกสมอง</span></div>
+            <div class="btn-action btn-game" onclick="openGame()"><i class="fa-solid fa-gamepad"></i><span>ฝึกสมอง</span></div>
             <div class="btn-action btn-sos" onclick="triggerSOS()"><i class="fa-solid fa-triangle-exclamation"></i><span>ฉุกเฉิน SOS</span></div>
         </div>
     </div>
 
     <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzph3otQ0ERZxWxwb8t-GrJbDeuzz9K4zMUCl4DpacNNItpZXX5OgoRKKwqfymLLn6fAw/exec";
         const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         let SYSTEM_ID = localStorage.getItem('MY_SYSTEM_ID');
         let myTitle = "ผู้สูงอายุ"; 
@@ -120,12 +136,21 @@
         let pills = [], photos = ["https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1000&q=80"], photoIndex = 0;
         let isMusicPlaying = false, audio = new Audio("https://listen.radioking.com/radio/15684/stream/29964"); 
 
+        // 🔴 ฟังก์ชันส่งเข้า Sheet แบบทะลวง CORS
+        function saveToCloud(payload) {
+            return fetch(GAS_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: "data=" + encodeURIComponent(JSON.stringify(payload))
+            }).catch(e => console.log("Cloud error: ", e));
+        }
+
         window.onload = () => {
-            if (SYSTEM_ID) { showDashboard(); initDeviceFeatures(); } 
+            if (SYSTEM_ID) { showDashboard(); initDeviceFeatures(); syncFromCloud(); } 
             else {
                 SYSTEM_ID = "ELDER_" + Math.floor(Math.random() * 900000 + 100000);
-                document.getElementById('display-id').innerText = "รหัสเครื่อง: " + SYSTEM_ID;
-                new QRCode(document.getElementById("qrcode"), { text: SYSTEM_ID, width: 200, height: 200 });
+                document.getElementById('display-id').innerText = SYSTEM_ID;
+                new QRCode(document.getElementById("qrcode"), { text: SYSTEM_ID, width: 220, height: 220 });
                 waitForPairing();
             }
         };
@@ -139,6 +164,22 @@
                     showDashboard(); client.unsubscribe(`pairing/${SYSTEM_ID}`); initDeviceFeatures();
                 }
             });
+        }
+
+        async function syncFromCloud() {
+            try {
+                const res = await fetch(`${GAS_URL}?action=read&id=${SYSTEM_ID}`);
+                const data = await res.json();
+                if(data.status !== "error" && data.name) {
+                    localStorage.setItem('elderProfile', JSON.stringify(data));
+                    myTitle = data.title || "ผู้สูงอายุ";
+                    document.getElementById('elder-name-display').innerText = `${myTitle} ${data.name} (${data.age} ปี) | ${data.disease}`;
+                    
+                    if(data.pills) { pills = JSON.parse(data.pills); localStorage.setItem('pillsList', data.pills); renderPills(); }
+                    if(data.appoint) { document.getElementById('disp-appoint').innerText = data.appoint; localStorage.setItem('appoint', data.appoint); }
+                    if(data.water) { waterCount = parseInt(data.water); document.getElementById('water-count').innerText = `ดื่มน้ำ (${waterCount})`; }
+                }
+            } catch(e) { console.log("Sync error"); }
         }
 
         function showDashboard() { document.getElementById('auth-screen').style.display = 'none'; document.getElementById('main-dashboard').style.display = 'flex'; }
@@ -158,21 +199,8 @@
 
         function initDeviceFeatures() {
             requestAllPermissions(); 
-
-            if(localStorage.getItem('waterCount')) waterCount = parseInt(localStorage.getItem('waterCount'));
-            document.getElementById('water-count').innerText = `ดื่มน้ำ (${waterCount})`;
-            if(localStorage.getItem('pillsList')) pills = JSON.parse(localStorage.getItem('pillsList')); renderPills();
-            if(localStorage.getItem('appoint')) document.getElementById('disp-appoint').innerText = localStorage.getItem('appoint');
-            if(localStorage.getItem('photos')) photos = JSON.parse(localStorage.getItem('photos'));
-            
-            if(localStorage.getItem('elderProfile')) {
-                const profile = JSON.parse(localStorage.getItem('elderProfile'));
-                myTitle = profile.title || "ผู้สูงอายุ"; 
-                document.getElementById('profile-display').style.display = 'flex';
-                document.getElementById('elder-name-display').innerText = `${myTitle} ${profile.name} (${profile.age} ปี) | ${profile.disease}`;
-            }
-
             fetchWeather(); initBatteryMonitor();
+
             if(!client.connected) client.reconnect();
             client.subscribe(`familycare/${SYSTEM_ID}/command/#`);
             setInterval(() => client.publish(`familycare/${SYSTEM_ID}/status/heartbeat`, 'online'), 5000);
@@ -181,16 +209,7 @@
                 if(!topic.startsWith(`familycare/${SYSTEM_ID}`)) return;
                 const payload = message.toString(); const action = topic.split('/').pop(); idleSeconds = 0; 
                 
-                if(action === 'profile') {
-                    const profile = JSON.parse(payload);
-                    localStorage.setItem('elderProfile', payload);
-                    myTitle = profile.title;
-                    document.getElementById('profile-display').style.display = 'flex';
-                    document.getElementById('elder-name-display').innerText = `${myTitle} ${profile.name} (${profile.age} ปี) | ${profile.disease}`;
-                    speak(`ตั้งค่าประวัติ${myTitle}เรียบร้อยแล้วครับ`);
-                }
-                else if(action === 'pills_update') { pills = JSON.parse(payload); localStorage.setItem('pillsList', payload); renderPills(); speak("อัปเดตตารางยาใหม่ครับ"); }
-                else if(action === 'appoint') { document.getElementById('disp-appoint').innerText = payload; localStorage.setItem('appoint', payload); speak("อัปเดตนัดหมายครับ"); }
+                if(action === 'profile' || action === 'pills_update' || action === 'appoint') { syncFromCloud(); }
                 else if(action === 'photo') { if(!photos.includes(payload)) { photos.push(payload); localStorage.setItem('photos', JSON.stringify(photos)); speak("มีรูปมาใหม่ครับ"); } }
                 else if(action === 'alert') { document.getElementById('alert-msg').innerText = payload; document.getElementById('alert-overlay').style.display = 'flex'; speak(payload); }
                 else if(action === 'youtube') {
@@ -208,8 +227,7 @@
             });
         }
 
-        function closeYouTube() { document.getElementById('youtube-container').innerHTML = ""; document.getElementById('youtube-overlay').style.display = 'none'; }
-
+        // --- ฟังก์ชันการทำงานของปุ่มต่างๆ ---
         function updateDateTime() { const now = new Date(); document.getElementById('clock').innerText = now.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}); document.getElementById('date-display').innerText = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); if(++idleSeconds > 60 && SYSTEM_ID) { const ss = document.getElementById('screensaver'); if(ss.style.display !== 'block') { ss.style.display = 'block'; changePhoto(); } } }
         setInterval(updateDateTime, 1000); updateDateTime(); setInterval(changePhoto, 15000);
         function changePhoto() { if(photos.length === 0) return; document.getElementById('screensaver').style.backgroundImage = `url('${photos[photoIndex]}')`; photoIndex = (photoIndex + 1) % photos.length; }
@@ -218,12 +236,28 @@
         async function fetchWeather() { try { const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=13.36&longitude=100.98&current_weather=true"); const data = await res.json(); document.getElementById('weather-display').innerHTML = `<i class="fa-solid fa-temperature-half"></i> อุณหภูมิ ${data.current_weather.temperature}°C`; } catch(e) {} }
         function initBatteryMonitor() { if(navigator.getBattery) { navigator.getBattery().then(b => { function sendB() { client.publish(`familycare/${SYSTEM_ID}/status/battery`, Math.round(b.level * 100) + "% " + (b.charging ? "⚡" : "")); } sendB(); b.addEventListener('levelchange', sendB); setInterval(sendB, 60000); }); } }
         
-        function renderPills() { const c = document.getElementById('pill-container'); if(pills.length === 0) { c.innerHTML = '<div style="color:var(--sub); font-size: 16px; text-align:center; padding: 10px;">ไม่มีตารางยา</div>'; return; } c.innerHTML = pills.map((p, i) => `<div class="pill-item" style="border-left-color: ${p.taken ? '#475569' : 'var(--warning)'}"><span class="pill-name" style="color: ${p.taken ? '#94A3B8' : 'white'}">${p.name}</span><button class="btn-take-pill ${p.taken ? 'taken' : ''}" onclick="takePill(${i})">${p.taken ? '<i class="fa-solid fa-check"></i>' : 'กินยา'}</button></div>`).join(''); }
-        function takePill(i) { pills[i].taken = true; localStorage.setItem('pillsList', JSON.stringify(pills)); renderPills(); speak(`บันทึกการกินยาแล้ว`); client.publish(`familycare/${SYSTEM_ID}/status/pill_taken`, pills[i].name); }
-        function drinkWater() { waterCount++; document.getElementById('water-count').innerText = `ดื่มน้ำ (${waterCount})`; localStorage.setItem('waterCount', waterCount); speak("เก่งมากครับ"); client.publish(`familycare/${SYSTEM_ID}/status/water`, waterCount.toString()); }
+        function renderPills() { 
+            const c = document.getElementById('pill-container'); 
+            if(pills.length === 0) { c.innerHTML = '<div style="color:var(--sub); font-size: 18px; text-align:center; padding: 20px;">ยังไม่มีตารางยา</div>'; return; } 
+            c.innerHTML = pills.map((p, i) => `<div class="pill-item" style="border-left-color: ${p.taken ? '#475569' : 'var(--warning)'}"><span class="pill-name" style="color: ${p.taken ? '#94A3B8' : 'white'}">${p.name}</span><button class="btn-take-pill ${p.taken ? 'taken' : ''}" onclick="takePill(${i})">${p.taken ? '<i class="fa-solid fa-check"></i> กินแล้ว' : 'กินยา'}</button></div>`).join(''); 
+        }
+        
+        function takePill(i) { 
+            pills[i].taken = true; localStorage.setItem('pillsList', JSON.stringify(pills)); renderPills(); speak(`บันทึกการกินยาแล้ว`); 
+            client.publish(`familycare/${SYSTEM_ID}/status/pill_taken`, pills[i].name); 
+            saveToCloud({ action: "updatePills", system_id: SYSTEM_ID, pills: JSON.stringify(pills) });
+        }
+        
+        function drinkWater() { 
+            waterCount++; document.getElementById('water-count').innerText = `ดื่มน้ำ (${waterCount})`; localStorage.setItem('waterCount', waterCount); speak("เก่งมากครับ"); 
+            client.publish(`familycare/${SYSTEM_ID}/status/water`, waterCount.toString()); 
+            saveToCloud({ action: "updateWater", system_id: SYSTEM_ID, water: waterCount });
+        }
+        
         function orderFood() { speak("เปิดเมนูสั่งอาหารครับ"); client.publish(`familycare/${SYSTEM_ID}/status/food_request`, `${myTitle}กำลังดูเมนูสั่งอาหาร`); window.open("https://food.grab.com/th/th/", "_blank"); }
         function toggleMusic() { if(isMusicPlaying) { audio.pause(); } else { audio.play(); } isMusicPlaying = !isMusicPlaying; }
         function acknowledgeAlert() { document.getElementById('alert-overlay').style.display = 'none'; client.publish(`familycare/${SYSTEM_ID}/status/read_receipt`, `${myTitle}กดรับทราบข้อความแล้ว`); }
+        function closeYouTube() { document.getElementById('youtube-container').innerHTML = ""; document.getElementById('youtube-overlay').style.display = 'none'; }
         
         function triggerSOS() { 
             speak("ส่งสัญญาณ SOS แล้ว"); 
@@ -237,6 +271,7 @@
             alert("ส่งฉุกเฉินแล้ว!"); 
         }
         
+        // --- เกมจับคู่ ---
         let cards = ['🍎','🍎','🐶','🐶','🚗','🚗','🍉','🍉'], fCard = null, sCard = null, matches = 0, locked = false;
         function openGame() { document.getElementById('game-overlay').style.display = 'flex'; initGame(); }
         function closeGame() { document.getElementById('game-overlay').style.display = 'none'; }
