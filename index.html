@@ -3,23 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>หน้าจอคุณตา (The Ultimate Edition)</title>
+    <title>หน้าจอคุณตา (QR + Ultimate)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://meet.jit.si/external_api.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #0F172A; --card: #1E293B; --text: #F8FAFC; --sub: #94A3B8; --primary: #38BDF8; --success: #10B981; --warning: #FBBF24; --danger: #EF4444; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; user-select: none; }
         body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        .dashboard { flex: 1; padding: 25px; display: flex; flex-direction: column; gap: 20px; max-width: 1200px; margin: 0 auto; width: 100%; }
+        /* หน้า Login / เชื่อมต่อ */
+        #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .qr-box { background: white; padding: 20px; border-radius: 20px; margin: 20px 0; border: 5px solid var(--primary); }
+        
+        /* หน้าหลัก Dashboard */
+        #main-dashboard { flex: 1; padding: 25px; display: none; flex-direction: column; gap: 20px; max-width: 1200px; margin: 0 auto; width: 100%; }
 
-        /* ส่วนหัว: นาฬิกา วันที่ และ อากาศ */
-        .header { text-align: center; margin-bottom: 5px; }
+        .header { text-align: center; margin-bottom: 5px; position: relative; }
         .clock { font-size: 90px; font-weight: 800; color: var(--primary); line-height: 1; text-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
         .date-text { font-size: 26px; color: var(--warning); margin-top: 5px; font-weight: 600; }
         .weather-text { font-size: 20px; color: var(--sub); margin-top: 5px; }
+
+        .btn-logout { position: absolute; top: 0; right: 0; background: rgba(255,255,255,0.1); color: white; border: none; padding: 10px 15px; border-radius: 10px; cursor: pointer; }
 
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .card { background: var(--card); border-radius: 20px; padding: 25px; border: 2px solid rgba(255,255,255,0.05); display: flex; flex-direction: column;}
@@ -28,15 +35,14 @@
         .pill-list { display: flex; flex-direction: column; gap: 12px; max-height: 200px; overflow-y: auto; }
         .pill-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 12px 18px; border-radius: 12px; border-left: 5px solid var(--warning); }
         .pill-name { font-size: 22px; font-weight: 800; color: white; }
-        .btn-take-pill { background: var(--success); color: white; border: none; padding: 10px 20px; font-size: 18px; font-weight: 800; border-radius: 10px; cursor: pointer; box-shadow: 0 6px 0 #059669; transition: 0.2s; }
+        .btn-take-pill { background: var(--success); color: white; border: none; padding: 10px 20px; font-size: 18px; font-weight: 800; border-radius: 10px; cursor: pointer; box-shadow: 0 6px 0 #059669; }
         .btn-take-pill:active { transform: translateY(6px); box-shadow: none; }
         .btn-take-pill.taken { background: #475569; box-shadow: none; color: #94A3B8; pointer-events: none; border-left-color: #475569;}
 
         .appoint-val { font-size: 24px; font-weight: 800; color: white; line-height: 1.4; padding: 15px; background: rgba(56,189,248,0.1); border-radius: 15px; border: 2px solid var(--primary); flex: 1;}
 
-        /* ปุ่มด้านล่าง 5 ปุ่ม */
         .action-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: auto; }
-        .btn-action { background: var(--card); border: 2px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-size: 20px; font-weight: 800; cursor: pointer; color: white; transition: 0.2s; text-align: center;}
+        .btn-action { background: var(--card); border: 2px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px 5px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; font-size: 20px; font-weight: 800; cursor: pointer; color: white; text-align: center;}
         .btn-action:active { transform: scale(0.95); background: rgba(0,0,0,0.5); }
         .btn-grab { background: #00B14F; border: none; }
         .btn-sos { background: linear-gradient(135deg, #EF4444, #B91C1C); border: none; }
@@ -47,17 +53,26 @@
         .btn-ack { background: var(--warning); color: black; border: none; padding: 15px 40px; font-size: 24px; font-weight: 800; border-radius: 15px; margin-top: 20px; cursor: pointer;}
         #screensaver { display: none; position: fixed; inset: 0; z-index: 900; background-color: black; background-size: cover; background-position: center; }
         
-        /* สไตล์เกมจับคู่ */
         #game-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px;}
-        .memory-card { background: var(--primary); border-radius: 15px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 50px; cursor: pointer; border: none; box-shadow: 0 6px 0 #0284C7; color: transparent; transition: 0.3s; }
+        .memory-card { background: var(--primary); border-radius: 15px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 50px; cursor: pointer; border: none; box-shadow: 0 6px 0 #0284C7; color: transparent; }
         .memory-card.flipped { background: white; border: 4px solid var(--primary); color: initial; box-shadow: 0 4px 0 #94A3B8; transform: translateY(4px); }
         .memory-card.matched { background: var(--success); border-color: #059669; color: initial; pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <div id="screensaver"></div>
+    <div id="auth-screen">
+        <i class="fa-solid fa-mobile-screen-button" style="font-size: 80px; color: var(--primary);"></i>
+        <h1 style="margin: 20px 0;">ลงทะเบียนเครื่องคุณตา</h1>
+        <p style="color: #94A3B8; font-size: 20px;">ให้ลูกหลานสแกน QR Code นี้เพื่อผูกบัญชี</p>
+        <div class="qr-box" id="qrcode"></div>
+        <h3 id="display-id" style="color: var(--primary); letter-spacing: 2px;"></h3>
+        <p id="wait-msg" style="color: var(--success); font-size: 20px; margin-top: 20px;">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> รอการยืนยันจากแอปของลูกหลาน...
+        </p>
+    </div>
 
+    <div id="screensaver"></div>
     <div id="alert-overlay" class="overlay">
         <div class="modal">
             <i class="fa-solid fa-bell fa-shake" style="font-size: 80px; color: var(--warning);"></i>
@@ -65,7 +80,6 @@
             <button class="btn-ack" onclick="acknowledgeAlert()">รับทราบครับ</button>
         </div>
     </div>
-
     <div id="game-overlay" class="overlay">
         <div class="modal" style="border-color: var(--primary);">
             <h2 style="color: white; font-size: 32px;"><i class="fa-solid fa-brain"></i> เกมฝึกสมอง</h2>
@@ -73,14 +87,14 @@
             <button class="btn-ack" onclick="closeGame()" style="background: var(--danger); color: white;">เลิกเล่น</button>
         </div>
     </div>
-
     <div id="video-overlay" class="overlay"><div id="jitsi-container" style="width:100%; height:100%;"></div></div>
 
-    <div class="dashboard">
+    <div id="main-dashboard">
         <div class="header">
             <div class="clock" id="clock">00:00</div>
             <div class="date-text" id="date-display">กำลังโหลดวันที่...</div>
             <div class="weather-text" id="weather-display"><i class="fa-solid fa-cloud-sun"></i> กำลังโหลดสภาพอากาศ...</div>
+            <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
         </div>
 
         <div class="grid-2">
@@ -89,7 +103,7 @@
                 <div class="pill-list" id="pill-container"></div>
             </div>
             <div class="card">
-                <div class="card-header"><i class="fa-regular fa-calendar-check" style="color:var(--primary);"></i> นัดหมายหมอครั้งถัดไป</div>
+                <div class="card-header"><i class="fa-regular fa-calendar-check" style="color:var(--primary);"></i> นัดหมายหมอ</div>
                 <div class="appoint-val" id="disp-appoint">ไม่มีนัดหมาย</div>
             </div>
         </div>
@@ -119,76 +133,105 @@
     </div>
 
     <script>
-        const SYSTEM_ID = "FAMILY_001_VIP"; 
         const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+        let SYSTEM_ID = localStorage.getItem('MY_SYSTEM_ID');
+        
         let waterCount = 0, jitsiApi = null, idleSeconds = 0;
         let pills = [], photos = ["https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1000&q=80"], photoIndex = 0;
-        let isMusicPlaying = false;
-        let audio = new Audio("https://listen.radioking.com/radio/15684/stream/29964"); 
+        let isMusicPlaying = false, audio = new Audio("https://listen.radioking.com/radio/15684/stream/29964"); 
 
         window.onload = () => {
-            if(localStorage.getItem('waterCount')) waterCount = parseInt(localStorage.getItem('waterCount'));
-            document.getElementById('water-count').innerText = `ดื่มน้ำ (${waterCount})`;
-            
-            if(localStorage.getItem('pillsList')) { pills = JSON.parse(localStorage.getItem('pillsList')); renderPills(); }
-            else { renderPills(); }
-            
-            if(localStorage.getItem('appoint')) document.getElementById('disp-appoint').innerText = localStorage.getItem('appoint');
-            if(localStorage.getItem('photos')) photos = JSON.parse(localStorage.getItem('photos'));
-            
-            fetchWeather(); // โหลดอากาศ
-            initBatteryMonitor(); // โหลดแบต
+            if (SYSTEM_ID) {
+                // เคยล็อกอินแล้ว ข้ามหน้า QR ไปหน้าหลักเลย
+                showDashboard();
+                initDeviceFeatures();
+            } else {
+                // ยังไม่เคยล็อกอิน สร้างรหัส QR
+                SYSTEM_ID = "ELDER_" + Math.floor(Math.random() * 900000 + 100000);
+                document.getElementById('display-id').innerText = "รหัสเครื่อง: " + SYSTEM_ID;
+                new QRCode(document.getElementById("qrcode"), { text: SYSTEM_ID, width: 250, height: 250 });
+                waitForPairing();
+            }
         };
 
-        // --- ระบบเวลา & สไลด์โชว์ ---
+        // --- ระบบผูกบัญชี (Pairing) ---
+        function waitForPairing() {
+            client.on('connect', () => { client.subscribe(`pairing/${SYSTEM_ID}`); });
+            client.on('message', (topic, message) => {
+                if (topic === `pairing/${SYSTEM_ID}` && message.toString() === "PAIRED_SUCCESS") {
+                    speak("เชื่อมต่อกับลูกหลานสำเร็จแล้วครับ");
+                    localStorage.setItem('MY_SYSTEM_ID', SYSTEM_ID);
+                    showDashboard();
+                    client.unsubscribe(`pairing/${SYSTEM_ID}`);
+                    initDeviceFeatures(); // เปิดทำงานระบบทั้งหมด
+                }
+            });
+        }
+
+        function showDashboard() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-dashboard').style.display = 'flex';
+        }
+
+        function logout() {
+            if(confirm("ต้องการออกจากระบบเพื่อผูกเครื่องใหม่ใช่หรือไม่?")) {
+                localStorage.removeItem('MY_SYSTEM_ID');
+                location.reload();
+            }
+        }
+
+        // --- เปิดระบบการทำงานเมื่อเชื่อมต่อสำเร็จ ---
+        function initDeviceFeatures() {
+            // โหลดข้อมูลเก่า
+            if(localStorage.getItem('waterCount')) waterCount = parseInt(localStorage.getItem('waterCount'));
+            document.getElementById('water-count').innerText = `ดื่มน้ำ (${waterCount})`;
+            if(localStorage.getItem('pillsList')) pills = JSON.parse(localStorage.getItem('pillsList'));
+            renderPills();
+            if(localStorage.getItem('appoint')) document.getElementById('disp-appoint').innerText = localStorage.getItem('appoint');
+            if(localStorage.getItem('photos')) photos = JSON.parse(localStorage.getItem('photos'));
+
+            fetchWeather(); initBatteryMonitor();
+
+            // สมัครรับคำสั่งจากแอดมิน
+            if(!client.connected) client.reconnect();
+            client.subscribe(`familycare/${SYSTEM_ID}/command/#`);
+            
+            // ส่งสัญญาณชีพว่าออนไลน์
+            setInterval(() => client.publish(`familycare/${SYSTEM_ID}/status/heartbeat`, 'online'), 5000);
+
+            // ตัวดักข้อความ
+            client.on('message', (topic, message) => {
+                if(!topic.startsWith(`familycare/${SYSTEM_ID}`)) return; // ป้องกันข้อความตอน pairing หลุดเข้ามา
+                const payload = message.toString(); const action = topic.split('/').pop(); idleSeconds = 0; 
+                
+                if(action === 'pills_update') { pills = JSON.parse(payload); localStorage.setItem('pillsList', payload); renderPills(); speak("อัปเดตตารางยาใหม่ครับ"); }
+                else if(action === 'appoint') { document.getElementById('disp-appoint').innerText = payload; localStorage.setItem('appoint', payload); speak("อัปเดตนัดหมายครับ"); }
+                else if(action === 'photo') { if(!photos.includes(payload)) { photos.push(payload); localStorage.setItem('photos', JSON.stringify(photos)); speak("มีรูปมาใหม่ครับ"); } }
+                else if(action === 'alert') { document.getElementById('alert-msg').innerText = payload; document.getElementById('alert-overlay').style.display = 'flex'; speak(payload); }
+                else if(action === 'video') {
+                    if(payload === 'start') { document.getElementById('video-overlay').style.display = 'flex'; speak("กำลังเปิดกล้องครับ"); jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", { roomName: "Room_" + SYSTEM_ID, parentNode: document.getElementById('jitsi-container'), width: "100%", height: "100%" }); } 
+                    else { if(jitsiApi) jitsiApi.dispose(); document.getElementById('video-overlay').style.display = 'none'; }
+                }
+            });
+        }
+
+        // --- ระบบหน้าจอและฟีเจอร์ย่อย (เหมือนเดิมเป๊ะ) ---
         function updateDateTime() {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
             document.getElementById('date-display').innerText = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-            if(++idleSeconds > 60) { 
-                const ss = document.getElementById('screensaver');
-                if(ss.style.display !== 'block') { ss.style.display = 'block'; changePhoto(); }
-            }
+            if(++idleSeconds > 60 && SYSTEM_ID) { const ss = document.getElementById('screensaver'); if(ss.style.display !== 'block') { ss.style.display = 'block'; changePhoto(); } }
         }
         setInterval(updateDateTime, 1000); updateDateTime();
         setInterval(changePhoto, 15000);
+        function changePhoto() { if(photos.length === 0) return; document.getElementById('screensaver').style.backgroundImage = `url('${photos[photoIndex]}')`; photoIndex = (photoIndex + 1) % photos.length; }
 
-        function changePhoto() {
-            if(photos.length === 0) return;
-            document.getElementById('screensaver').style.backgroundImage = `url('${photos[photoIndex]}')`;
-            photoIndex = (photoIndex + 1) % photos.length;
-        }
+        document.body.addEventListener('click', () => { idleSeconds = 0; document.getElementById('screensaver').style.display = 'none'; if(window.speechSynthesis) window.speechSynthesis.getVoices(); });
+        function speak(txt) { if('speechSynthesis' in window) { window.speechSynthesis.cancel(); const msg = new SpeechSynthesisUtterance(txt); msg.lang = 'th-TH'; window.speechSynthesis.speak(msg); } }
 
-        document.body.addEventListener('click', () => { 
-            idleSeconds = 0; document.getElementById('screensaver').style.display = 'none';
-            if(window.speechSynthesis) window.speechSynthesis.getVoices(); 
-        });
+        async function fetchWeather() { try { const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=13.36&longitude=100.98&current_weather=true"); const data = await res.json(); document.getElementById('weather-display').innerHTML = `<i class="fa-solid fa-temperature-half"></i> อุณหภูมิตอนนี้ ${data.current_weather.temperature}°C`; } catch(e) { } }
+        function initBatteryMonitor() { if(navigator.getBattery) { navigator.getBattery().then(battery => { function sendBattery() { client.publish(`familycare/${SYSTEM_ID}/status/battery`, Math.round(battery.level * 100) + "% " + (battery.charging ? "⚡" : "")); } sendBattery(); battery.addEventListener('levelchange', sendBattery); battery.addEventListener('chargingchange', sendBattery); setInterval(sendBattery, 60000); }); } }
 
-        function speak(txt) {
-            if('speechSynthesis' in window) { window.speechSynthesis.cancel(); const msg = new SpeechSynthesisUtterance(txt); msg.lang = 'th-TH'; window.speechSynthesis.speak(msg); }
-        }
-
-        // --- ระบบสภาพอากาศ & แบตเตอรี่ ---
-        async function fetchWeather() {
-            try { // ดึงอากาศคร่าวๆ ฟรีจาก Open-Meteo
-                const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=13.36&longitude=100.98&current_weather=true");
-                const data = await res.json();
-                document.getElementById('weather-display').innerHTML = `<i class="fa-solid fa-temperature-half"></i> อุณหภูมิตอนนี้ ${data.current_weather.temperature}°C`;
-            } catch(e) { document.getElementById('weather-display').innerText = "ไม่สามารถโหลดสภาพอากาศได้"; }
-        }
-
-        function initBatteryMonitor() {
-            if(navigator.getBattery) {
-                navigator.getBattery().then(battery => {
-                    function sendBattery() { client.publish(`familycare/${SYSTEM_ID}/status/battery`, Math.round(battery.level * 100) + "% " + (battery.charging ? "⚡" : "")); }
-                    sendBattery(); battery.addEventListener('levelchange', sendBattery); battery.addEventListener('chargingchange', sendBattery);
-                    setInterval(sendBattery, 60000);
-                });
-            }
-        }
-
-        // --- ระบบจัดการยา ---
         function renderPills() {
             const container = document.getElementById('pill-container');
             if(pills.length === 0) { container.innerHTML = '<div style="color:var(--sub); font-size: 20px; text-align:center; padding: 20px;">ไม่มีตารางยา</div>'; return; }
@@ -200,72 +243,27 @@
             `).join('');
         }
 
-        function takePill(index) {
-            pills[index].taken = true; localStorage.setItem('pillsList', JSON.stringify(pills));
-            renderPills(); speak(`บันทึกการกิน ${pills[index].name} เรียบร้อยครับ`);
-            client.publish(`familycare/${SYSTEM_ID}/status/pill_taken`, pills[index].name);
-        }
-
-        // --- ระบบปุ่มกด ---
-        function drinkWater() {
-            waterCount++; document.getElementById('water-count').innerText = `ดื่มน้ำ (${waterCount})`;
-            localStorage.setItem('waterCount', waterCount); speak("ดื่มน้ำเก่งมากครับ"); 
-            client.publish(`familycare/${SYSTEM_ID}/status/water`, waterCount.toString());
-        }
+        function takePill(index) { pills[index].taken = true; localStorage.setItem('pillsList', JSON.stringify(pills)); renderPills(); speak(`บันทึกการกิน ${pills[index].name} เรียบร้อยครับ`); client.publish(`familycare/${SYSTEM_ID}/status/pill_taken`, pills[index].name); }
+        function drinkWater() { waterCount++; document.getElementById('water-count').innerText = `ดื่มน้ำ (${waterCount})`; localStorage.setItem('waterCount', waterCount); speak("ดื่มน้ำเก่งมากครับ"); client.publish(`familycare/${SYSTEM_ID}/status/water`, waterCount.toString()); }
         function orderFood() { speak("เปิดเมนูสั่งอาหาร Grab ครับ"); client.publish(`familycare/${SYSTEM_ID}/status/food_request`, "คุณตากำลังดูเมนูสั่งอาหาร"); window.open("https://food.grab.com/th/th/", "_blank"); }
         function toggleMusic() { if(isMusicPlaying) { audio.pause(); speak("ปิดเพลงแล้วครับ"); } else { audio.play(); speak("เปิดเพลงให้ฟังครับ"); } isMusicPlaying = !isMusicPlaying; }
-        
         function acknowledgeAlert() { document.getElementById('alert-overlay').style.display = 'none'; client.publish(`familycare/${SYSTEM_ID}/status/read_receipt`, 'คุณตากดรับทราบข้อความแล้ว'); }
-        
         function triggerSOS() {
-            speak("กำลังส่งสัญญาณ SOS และพิกัดของคุณครับ");
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((pos) => {
-                    client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }));
-                }, () => { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({error: "GPS_DENIED"})); });
-            } else { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({error: "NO_GPS"})); }
-            alert("ส่งสัญญาณฉุกเฉินและพิกัดแล้ว!");
+            speak("กำลังส่งสัญญาณ SOS");
+            if (navigator.geolocation) { navigator.geolocation.getCurrentPosition((pos) => { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude })); }, () => { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({error: "GPS_DENIED"})); }); } 
+            else { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({error: "NO_GPS"})); } alert("ส่งสัญญาณฉุกเฉินแล้ว!");
         }
 
-        // --- ระบบเกมความจำ ---
+        // เกมจับคู่
         let cards = ['🍎','🍎','🐶','🐶','🚗','🚗','🍉','🍉'], fCard = null, sCard = null, matches = 0, locked = false;
-        function openGame() { document.getElementById('game-overlay').style.display = 'flex'; speak("หาภาพที่เหมือนกันให้เจอนะครับ"); initGame(); }
+        function openGame() { document.getElementById('game-overlay').style.display = 'flex'; speak("มาฝึกสมองกันครับ"); initGame(); }
         function closeGame() { document.getElementById('game-overlay').style.display = 'none'; }
-        function initGame() {
-            const b = document.getElementById('game-board'); b.innerHTML = '';
-            cards.sort(() => 0.5 - Math.random()); matches = 0; [fCard, sCard, locked] = [null, null, false];
-            cards.forEach(c => {
-                let btn = document.createElement('button'); btn.className = 'memory-card'; btn.dataset.val = c;
-                btn.onclick = () => flipCard(btn); b.appendChild(btn);
-            });
-        }
+        function initGame() { const b = document.getElementById('game-board'); b.innerHTML = ''; cards.sort(() => 0.5 - Math.random()); matches = 0; [fCard, sCard, locked] = [null, null, false]; cards.forEach(c => { let btn = document.createElement('button'); btn.className = 'memory-card'; btn.dataset.val = c; btn.onclick = () => flipCard(btn); b.appendChild(btn); }); }
         function flipCard(card) {
-            if(locked || card === fCard || card.classList.contains('matched')) return;
-            card.classList.add('flipped'); card.innerText = card.dataset.val;
-            if(!fCard) { fCard = card; return; }
-            sCard = card; locked = true;
-            if(fCard.dataset.val === sCard.dataset.val) {
-                fCard.classList.add('matched'); sCard.classList.add('matched'); matches++; speak("เก่งมากครับ");
-                if(matches === 4) setTimeout(() => { speak("คุณตาชนะแล้ว"); alert("ชนะแล้ว! 🎉"); initGame(); }, 500);
-                [fCard, sCard, locked] = [null, null, false];
-            } else {
-                setTimeout(() => { fCard.classList.remove('flipped'); fCard.innerText = ''; sCard.classList.remove('flipped'); sCard.innerText = ''; [fCard, sCard, locked] = [null, null, false]; }, 1000);
-            }
+            if(locked || card === fCard || card.classList.contains('matched')) return; card.classList.add('flipped'); card.innerText = card.dataset.val; if(!fCard) { fCard = card; return; } sCard = card; locked = true;
+            if(fCard.dataset.val === sCard.dataset.val) { fCard.classList.add('matched'); sCard.classList.add('matched'); matches++; speak("เก่งมากครับ"); if(matches === 4) setTimeout(() => { alert("ชนะแล้ว! 🎉"); initGame(); }, 500); [fCard, sCard, locked] = [null, null, false]; } 
+            else { setTimeout(() => { fCard.classList.remove('flipped'); fCard.innerText = ''; sCard.classList.remove('flipped'); sCard.innerText = ''; [fCard, sCard, locked] = [null, null, false]; }, 1000); }
         }
-
-        // --- MQTT รับข้อมูล ---
-        client.on('connect', () => { client.subscribe(`familycare/${SYSTEM_ID}/command/#`); setInterval(() => client.publish(`familycare/${SYSTEM_ID}/status/heartbeat`, 'online'), 5000); });
-        client.on('message', (topic, message) => {
-            const payload = message.toString(); const action = topic.split('/').pop(); idleSeconds = 0; 
-            if(action === 'pills_update') { pills = JSON.parse(payload); localStorage.setItem('pillsList', payload); renderPills(); speak("อัปเดตตารางยาใหม่ครับ"); }
-            else if(action === 'appoint') { document.getElementById('disp-appoint').innerText = payload; localStorage.setItem('appoint', payload); speak("อัปเดตนัดหมายครับ"); }
-            else if(action === 'photo') { if(!photos.includes(payload)) { photos.push(payload); localStorage.setItem('photos', JSON.stringify(photos)); speak("มีรูปมาใหม่ครับ"); } }
-            else if(action === 'alert') { document.getElementById('alert-msg').innerText = payload; document.getElementById('alert-overlay').style.display = 'flex'; speak(payload); }
-            else if(action === 'video') {
-                if(payload === 'start') { document.getElementById('video-overlay').style.display = 'flex'; speak("กำลังเปิดกล้องครับ"); jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", { roomName: "Room_" + SYSTEM_ID, parentNode: document.getElementById('jitsi-container'), width: "100%", height: "100%" }); } 
-                else { if(jitsiApi) jitsiApi.dispose(); document.getElementById('video-overlay').style.display = 'none'; }
-            }
-        });
     </script>
 </body>
 </html>
