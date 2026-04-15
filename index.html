@@ -3,44 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>หน้าจอคุณตา (Ultimate Clean)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <title>หน้าจอคุณตา (Smart Display Edition)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://meet.jit.si/external_api.js"></script>
     <style>
-        /* ตัวแปรสี Day/Night Mode */
-        :root { --bg: #F8FAFC; --primary: #2563EB; --danger: #DC2626; --text: #0F172A; --card-bg: #FFFFFF; --info-bg: #FEF3C7; --info-border: #F59E0B; }
-        body.night-mode { --bg: #0B0F1A; --primary: #3B82F6; --danger: #991B1B; --text: #F8FAFC; --card-bg: #161C2D; --info-bg: #2D3748; --info-border: #4A5568; }
+        :root { 
+            --bg: #F1F5F9; --text: #1E293B; --card: #FFFFFF; 
+            --primary: #3B82F6; --success: #10B981; --danger: #EF4444; --warning: #F59E0B;
+        }
+        body.night-mode { 
+            --bg: #0B0F1A; --text: #F8FAFC; --card: #161C2D; 
+            --primary: #60A5FA; --success: #34D399;
+        }
         
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; user-select: none; }
-        body { background: var(--bg); color: var(--text); padding: 20px; padding-bottom: 150px; transition: background 1s, color 1s; }
+        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; transition: 0.8s; overflow: hidden; }
 
-        /* UI หลัก */
-        .header { text-align: center; margin-bottom: 30px; background: var(--card-bg); padding: 20px; border-radius: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: 0.5s; }
-        .clock { font-size: 80px; font-weight: 900; color: var(--primary); line-height: 1; }
+        /* Main Container */
+        .dashboard { flex: 1; padding: 40px; display: flex; flex-direction: column; gap: 30px; max-width: 1000px; margin: 0 auto; width: 100%; }
+
+        /* Header / Clock */
+        .header { text-align: center; margin-top: 20px; }
+        .clock { font-size: 100px; font-weight: 800; line-height: 1; color: var(--primary); letter-spacing: -2px; }
+        .date-text { font-size: 26px; font-weight: 400; color: #64748B; margin-top: 10px; }
+        body.night-mode .date-text { color: #94A3B8; }
+
+        /* Information Cards */
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: var(--card); border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); transition: 0.4s; border: 1px solid rgba(148, 163, 184, 0.1); }
+        .card-icon { font-size: 24px; margin-bottom: 15px; color: var(--primary); }
+        .card-title { font-size: 18px; color: #64748B; font-weight: 600; margin-bottom: 5px; }
+        .card-value { font-size: 26px; font-weight: 800; color: var(--text); word-break: break-word; }
+
+        /* Action Buttons */
+        .action-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: auto; }
+        .btn-action { background: var(--card); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 20px; padding: 25px 15px; text-align: center; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.02); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .btn-action:active { transform: scale(0.95); background: #E2E8F0; }
+        body.night-mode .btn-action:active { background: #1E293B; }
         
-        .info-box { background: var(--info-bg); border: 5px solid var(--info-border); padding: 25px; border-radius: 30px; margin-bottom: 25px; transition: 0.5s; }
-        .info-title { font-size: 28px; font-weight: 800; margin-bottom: 10px; color: var(--text); }
-        .info-text { font-size: 36px; font-weight: 900; color: var(--text); }
-
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .btn-big { font-size: 32px; font-weight: 900; padding: 40px 20px; border-radius: 30px; border: none; color: white; display: flex; flex-direction: column; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; }
-        .btn-big:active { transform: translateY(10px); }
-        .btn-water { background: #0EA5E9; box-shadow: 0 12px 0 #0284C7; }
-        .btn-pill { background: #10B981; box-shadow: 0 12px 0 #059669; }
-
-        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; padding: 20px; background: var(--card-bg); border-top: 5px solid var(--info-border); z-index: 100; transition: 0.5s; }
-        .btn-sos { width: 100%; font-size: 45px; font-weight: 900; padding: 30px; border-radius: 40px; border: none; background: var(--danger); color: white; box-shadow: 0 15px 0 rgba(0,0,0,0.5); }
-
-        /* ระบบสไลด์โชว์รูปลูกหลาน */
-        #screensaver { display: none; position: fixed; inset: 0; z-index: 900; background-color: black; background-size: contain; background-repeat: no-repeat; background-position: center; animation: fade 2s; }
+        .btn-icon { font-size: 32px; color: var(--primary); }
+        .btn-text { font-size: 18px; font-weight: 600; color: var(--text); }
         
-        /* Overlays */
-        .overlay { display: none; position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,0.9); flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 20px; }
-        .alert-box { background: #F59E0B; padding: 50px; border-radius: 40px; width: 100%; max-width: 600px; color: black; }
+        .btn-sos { background: linear-gradient(135deg, #EF4444, #B91C1C); color: white; border: none; }
+        .btn-sos .btn-icon, .btn-sos .btn-text { color: white; }
+
+        /* Modals & Overlays */
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal { background: var(--card); padding: 50px; border-radius: 30px; text-align: center; max-width: 600px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+        .modal-text { font-size: 36px; font-weight: 800; margin: 30px 0; color: var(--text); }
+        .btn-ack { background: var(--primary); color: white; border: none; padding: 20px 50px; font-size: 24px; font-weight: 600; border-radius: 100px; cursor: pointer; }
         
-        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        #screensaver { display: none; position: fixed; inset: 0; z-index: 900; background-color: black; background-size: cover; background-position: center; animation: fadeIn 2s; }
+        #video-overlay { padding: 0; background: black; }
+        #jitsi-container { width: 100%; height: 100%; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -48,76 +67,90 @@
     <div id="screensaver"></div>
 
     <div id="alert-overlay" class="overlay">
-        <div class="alert-box">
-            <i class="fa-solid fa-bullhorn fa-beat" style="font-size: 100px;"></i>
-            <div style="font-size: 50px; font-weight: 900; margin: 30px 0; line-height: 1.2;" id="alert-msg">ข้อความ...</div>
-            <button onclick="document.getElementById('alert-overlay').style.display='none'" style="font-size: 40px; padding: 20px 60px; border-radius: 30px; border: none; font-weight: 900; background: white; color: black;">รับทราบ</button>
+        <div class="modal">
+            <i class="fa-solid fa-envelope-open-text" style="font-size: 80px; color: var(--warning);"></i>
+            <div class="modal-text" id="alert-msg">ข้อความใหม่</div>
+            <button class="btn-ack" onclick="acknowledgeAlert()">รับทราบครับ</button>
         </div>
     </div>
 
-    <div id="video-overlay" class="overlay" style="padding:0; background: black;">
-        <div id="jitsi-container" style="width: 100%; height: 100%;"></div>
+    <div id="video-overlay" class="overlay">
+        <div id="jitsi-container"></div>
     </div>
 
-    <div class="header">
-        <div class="clock" id="clock">00:00</div>
-        <div style="font-size: 24px; font-weight: 600; opacity: 0.5;">แตะหน้าจอ 1 ครั้งเพื่อเปิดระบบเสียง</div>
-    </div>
+    <div class="dashboard">
+        <div class="header">
+            <div class="clock" id="clock">00:00</div>
+            <div class="date-text" id="date-display">กำลังโหลดวันที่...</div>
+        </div>
 
-    <div class="info-box">
-        <div class="info-title"><i class="fa-solid fa-pills"></i> ยาที่ต้องกินวันนี้</div>
-        <div class="info-text" id="disp-pill">ยังไม่มีข้อมูลยา</div>
-    </div>
+        <div class="info-grid">
+            <div class="card">
+                <div class="card-icon"><i class="fa-solid fa-pills"></i></div>
+                <div class="card-title">ยาที่ต้องทาน</div>
+                <div class="card-value" id="disp-pill">- รออัปเดต -</div>
+            </div>
+            <div class="card">
+                <div class="card-icon" style="color: var(--warning);"><i class="fa-regular fa-calendar-check"></i></div>
+                <div class="card-title">นัดหมายถัดไป</div>
+                <div class="card-value" id="disp-appoint">- รออัปเดต -</div>
+            </div>
+        </div>
 
-    <div class="info-box" style="border-color: #6366F1;">
-        <div class="info-title"><i class="fa-regular fa-calendar-check"></i> นัดหมอครั้งถัดไป</div>
-        <div class="info-text" id="disp-appoint">ยังไม่มีวันนัด</div>
-    </div>
-
-    <div class="grid">
-        <button class="btn-big btn-water" onclick="drinkWater()"><i class="fa-solid fa-glass-water" style="font-size: 60px;"></i><span>ดื่มน้ำ <br><small id="water-count" style="font-size:24px;">(0 แก้ว)</small></span></button>
-        <button class="btn-big btn-pill" onclick="takePill()"><i class="fa-solid fa-check-double" style="font-size: 60px;"></i><span>กินยาแล้ว</span></button>
-    </div>
-
-    <div class="bottom-bar">
-        <button class="btn-sos" onclick="triggerSOS()"><i class="fa-solid fa-triangle-exclamation"></i> แจ้งเหตุฉุกเฉินด่วน!</button>
+        <div class="action-bar">
+            <div class="btn-action" onclick="drinkWater()">
+                <i class="fa-solid fa-glass-water btn-icon" style="color: #0EA5E9;"></i>
+                <span class="btn-text" id="water-count">ดื่มน้ำ (0)</span>
+            </div>
+            <div class="btn-action" onclick="takePill()">
+                <i class="fa-solid fa-check-double btn-icon" style="color: var(--success);"></i>
+                <span class="btn-text">ทานยาแล้ว</span>
+            </div>
+            <div class="btn-action" onclick="toggleMusic()">
+                <i class="fa-solid fa-radio btn-icon" style="color: #8B5CF6;"></i>
+                <span class="btn-text">ฟังเพลง</span>
+            </div>
+            <div class="btn-action btn-sos" onclick="triggerSOS()">
+                <i class="fa-solid fa-shield-heart btn-icon"></i>
+                <span class="btn-text">ฉุกเฉิน SOS</span>
+            </div>
+        </div>
     </div>
 
     <script>
-        // รหัสเครื่อง (ต้องตรงกับฝั่งลูกหลาน)
         const SYSTEM_ID = "FAMILY_001_VIP"; 
         const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         
         let waterCount = 0;
         let jitsiApi = null;
         let idleSeconds = 0;
+        let isMusicPlaying = false;
+        let audio = new Audio("https://listen.radioking.com/radio/15684/stream/29964"); // ตัวอย่างลิงก์วิทยุเพลงลูกกรุง/ธรรมะ
         
-        // รูปภาพเริ่มต้นสำหรับสไลด์โชว์
-        let photos = ["https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&q=80"];
+        let photos = ["https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1000&q=80"];
         let photoIndex = 0;
 
-        // ระบบเวลา, Night Mode และ Screensaver
-        setInterval(() => {
+        // อัปเดตเวลาและวันที่ (แบบไทย)
+        function updateDateTime() {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'});
             
-            // Auto Night Mode (เปิดตอน 19:00 ถึง 06:00)
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('date-display').innerText = now.toLocaleDateString('th-TH', options);
+
             const hour = now.getHours();
-            if(hour >= 19 || hour < 6) document.body.classList.add('night-mode');
+            if(hour >= 18 || hour < 6) document.body.classList.add('night-mode');
             else document.body.classList.remove('night-mode');
 
-            // จับเวลาไม่ใช้งาน (ถ้าเกิน 30 วิ โชว์รูป)
             idleSeconds++;
-            if(idleSeconds > 30) {
+            if(idleSeconds > 45) { // 45 วิไม่แตะจอ ให้เข้าโหมดสไลด์โชว์
                 const ss = document.getElementById('screensaver');
-                if(ss.style.display !== 'block') {
-                    ss.style.display = 'block';
-                    changePhoto();
-                }
+                if(ss.style.display !== 'block') { ss.style.display = 'block'; changePhoto(); }
             }
-        }, 1000);
-
-        setInterval(changePhoto, 10000); // เปลี่ยนรูปทุก 10 วิ
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime(); // เรียกทันทีตอนเปิดเว็บ
+        setInterval(changePhoto, 15000);
 
         function changePhoto() {
             if(photos.length === 0) return;
@@ -125,7 +158,7 @@
             photoIndex = (photoIndex + 1) % photos.length;
         }
 
-        // แตะหน้าจอเพื่อรีเซ็ตเวลาและเปิดเสียง
+        // แตะหน้าจอเพื่อรีเซ็ต Idle
         document.body.addEventListener('click', () => { 
             idleSeconds = 0; 
             document.getElementById('screensaver').style.display = 'none';
@@ -134,36 +167,35 @@
 
         function speak(txt) {
             if('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
                 const msg = new SpeechSynthesisUtterance(txt);
                 msg.lang = 'th-TH'; window.speechSynthesis.speak(msg);
             }
         }
 
-        // --- ระบบรับคำสั่ง MQTT ---
+        // --- MQTT ---
         client.on('connect', () => {
             client.subscribe(`familycare/${SYSTEM_ID}/command/#`);
-            // ส่งสัญญาณชีพจรบอกลูกหลานว่าเครื่องเปิดอยู่
             setInterval(() => client.publish(`familycare/${SYSTEM_ID}/status/heartbeat`, 'online'), 5000);
         });
 
         client.on('message', (topic, message) => {
             const payload = message.toString();
             const action = topic.split('/').pop();
-            
-            idleSeconds = 0; // มีข้อความเข้า รีเซ็ตหน้าจอสไลด์โชว์
+            idleSeconds = 0; 
 
-            if(action === 'pill') { document.getElementById('disp-pill').innerText = payload; speak("มียาอัปเดตใหม่ครับ"); }
-            else if(action === 'appoint') { document.getElementById('disp-appoint').innerText = payload; speak("มีนัดหมายอัปเดตครับ"); }
-            else if(action === 'photo') { photos.push(payload); speak("มีรูปหลานๆ ส่งมาใหม่ครับ"); }
+            if(action === 'pill') { document.getElementById('disp-pill').innerText = payload; speak("อัปเดตตารางยาใหม่ครับ"); }
+            else if(action === 'appoint') { document.getElementById('disp-appoint').innerText = payload; speak("อัปเดตนัดหมายครับ"); }
+            else if(action === 'photo') { photos.push(payload); speak("ลูกหลานส่งรูปมาให้ดูครับ"); }
             else if(action === 'alert') {
                 document.getElementById('alert-msg').innerText = payload;
                 document.getElementById('alert-overlay').style.display = 'flex';
-                speak("ลูกหลานแจ้งว่า: " + payload);
+                speak(payload);
             }
             else if(action === 'video') {
                 if(payload === 'start') {
                     document.getElementById('video-overlay').style.display = 'flex';
-                    speak("กำลังเชื่อมต่อกล้องกับลูกหลาน");
+                    speak("ลูกหลานกำลังเปิดกล้องครับ");
                     jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", { roomName: "Room_" + SYSTEM_ID, parentNode: document.getElementById('jitsi-container'), width: "100%", height: "100%" });
                 } else {
                     if(jitsiApi) jitsiApi.dispose();
@@ -172,22 +204,35 @@
             }
         });
 
-        // --- ระบบส่งข้อมูลกลับ ---
+        // --- ฟังก์ชันการทำงานปุ่ม ---
         function drinkWater() {
-            waterCount++; document.getElementById('water-count').innerText = `(${waterCount} แก้ว)`;
+            waterCount++; 
+            document.getElementById('water-count').innerText = `ดื่มน้ำ (${waterCount})`;
             speak("ดื่มน้ำเก่งมากครับ"); 
             client.publish(`familycare/${SYSTEM_ID}/status/water`, waterCount.toString());
         }
 
         function takePill() {
-            speak("บันทึกการกินยาแล้วครับ"); 
+            speak("บันทึกว่าทานยาแล้วครับ"); 
             client.publish(`familycare/${SYSTEM_ID}/status/pill_taken`, 'yes');
         }
 
+        function toggleMusic() {
+            if(isMusicPlaying) { audio.pause(); speak("ปิดเพลงแล้วครับ"); } 
+            else { audio.play(); speak("เปิดเพลงให้ฟังครับ"); }
+            isMusicPlaying = !isMusicPlaying;
+        }
+
+        function acknowledgeAlert() {
+            document.getElementById('alert-overlay').style.display = 'none';
+            // ส่ง Read Receipt กลับไปหาลูกหลาน
+            client.publish(`familycare/${SYSTEM_ID}/status/read_receipt`, 'คุณตากดรับทราบข้อความแล้ว');
+        }
+
         function triggerSOS() {
-            speak("ส่งสัญญาณเตือนภัยแล้ว กรุณารอสักครู่");
+            speak("กำลังส่งสัญญาณขอความช่วยเหลือ");
             client.publish(`familycare/${SYSTEM_ID}/status/sos`, 'EMERGENCY');
-            alert("🚨 ส่งสัญญาณเตือนไปที่หน้าจอแอดมินของลูกหลานแล้ว!");
+            alert("ส่งสัญญาณฉุกเฉินเรียบร้อย!");
         }
     </script>
 </body>
