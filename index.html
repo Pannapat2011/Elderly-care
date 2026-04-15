@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FamilyCare - Admin Dashboard (ALL-IN-ONE)</title>
+    <title>FamilyCare PRO - Command Center</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -11,108 +11,145 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        :root { --bg: #0F172A; --card: rgba(30, 41, 59, 0.9); --primary: #3B82F6; --success: #10B981; --danger: #EF4444; --warning: #F59E0B; --text: #F8FAFC; --sub: #94A3B8; }
+        :root { 
+            --bg: #0B0F1A; --card: #161C2D; --primary: #3B82F6; 
+            --success: #10B981; --danger: #EF4444; --warning: #F59E0B; 
+            --text: #F8FAFC; --sub: #94A3B8; --border: rgba(255,255,255,0.05);
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; }
-        body { background: var(--bg); color: var(--text); padding: 20px; min-height: 100vh; }
+        body { background: var(--bg); color: var(--text); padding: 20px; min-height: 100vh; overflow-x: hidden; }
         
-        .header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 20px 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
-        .title h1 { font-size: 28px; font-weight: 900; color: #38BDF8; }
+        /* Layout */
+        .header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 15px 25px; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .title h1 { font-size: 24px; font-weight: 900; background: linear-gradient(90deg, #38BDF8, #818CF8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .status-badge { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.4); padding: 10px 20px; border-radius: 30px; }
-        .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 10px var(--danger); transition: 0.3s; }
-        .dot.online { background: var(--success); box-shadow: 0 0 15px var(--success); }
+        .status-badge { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 30px; border: 1px solid var(--border); }
+        .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--danger); }
+        .dot.online { background: var(--success); box-shadow: 0 0 15px var(--success); animation: pulse 2s infinite; }
 
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .card { background: var(--card); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; }
-        .card-header { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: white; display: flex; align-items: center; gap: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .col-8 { grid-column: span 8; }
+        .col-4 { grid-column: span 4; }
+        .col-12 { grid-column: span 12; }
 
-        .btn { width: 100%; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; color: white; margin-bottom: 10px; transition: 0.2s; }
-        .btn:active { transform: scale(0.95); }
-        .btn-primary { background: var(--primary); } .btn-warning { background: var(--warning); } .btn-success { background: var(--success); } .btn-danger { background: var(--danger); }
+        .card-header { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
 
-        .form-control { width: 100%; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 14px; margin-bottom: 10px; }
+        /* Controls */
+        .btn { border: none; border-radius: 12px; padding: 12px 20px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; color: white; width: 100%; }
+        .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+        .btn-primary { background: var(--primary); }
+        .btn-danger { background: var(--danger); }
+        .btn-success { background: var(--success); }
+        .btn-warning { background: var(--warning); }
 
-        .data-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        .form-input { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: white; margin-bottom: 10px; outline: none; }
+        .form-input:focus { border-color: var(--primary); }
+
+        /* Components */
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-item { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 18px; text-align: center; border: 1px solid var(--border); }
+        .stat-label { color: var(--sub); font-size: 13px; margin-bottom: 5px; }
+        .stat-value { font-size: 20px; font-weight: 800; }
+
+        #gps-map { width: 100%; height: 350px; border-radius: 20px; border: 1px solid var(--border); }
         
-        #video-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0F172A; z-index: 10000; flex-direction: column; }
-        #jitsi-container { flex-grow: 1; }
-        #gps-map { width: 100%; height: 250px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px;}
+        .voice-log { height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 15px; padding: 15px; }
+        .voice-item { background: rgba(59, 130, 246, 0.1); border-left: 4px solid var(--primary); padding: 12px; border-radius: 8px; margin-bottom: 10px; animation: slideIn 0.3s ease-out; }
 
-        .voice-msg { background: rgba(59, 130, 246, 0.2); border-left: 4px solid var(--primary); padding: 10px; border-radius: 5px; margin-bottom: 10px; }
-        
-        #sos-alert { display: none; background: rgba(239, 68, 68, 0.2); border: 2px solid var(--danger); padding: 20px; border-radius: 15px; margin-bottom: 20px; animation: pulseRed 1s infinite; justify-content: space-between; align-items: center; }
-        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        /* SOS Alert */
+        #sos-alert { display: none; background: linear-gradient(90deg, #7F1D1D, #EF4444); color: white; padding: 20px; border-radius: 20px; margin-bottom: 20px; justify-content: space-between; align-items: center; animation: alertPulse 1.5s infinite; }
+
+        /* Video Modal */
+        #video-modal { display: none; position: fixed; inset: 0; background: #000; z-index: 10000; flex-direction: column; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        @keyframes alertPulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div id="video-modal">
-        <div style="padding: 20px; background: #1E293B; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 20px; font-weight: 700; color: white;"><i class="fa-solid fa-video"></i> VDO Call Command</span>
-            <button onclick="endVideoCall()" class="btn btn-danger" style="width: auto; margin:0;">ตัดสาย</button>
+        <div style="padding: 15px; background: #111; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 800;"><i class="fa-solid fa-video"></i> กำลังเชื่อมต่อสาย...</span>
+            <button onclick="endVideoCall()" class="btn btn-danger" style="width: auto;">วางสาย</button>
         </div>
-        <div id="jitsi-container"></div>
+        <div id="jitsi-container" style="flex: 1;"></div>
     </div>
 
     <div class="header">
-        <div class="title"><h1><i class="fa-solid fa-microchip"></i> FamilyCare Command</h1></div>
+        <div class="title"><h1><i class="fa-solid fa-shield-heart"></i> FamilyCare Control</h1></div>
         <div style="display: flex; gap: 15px; align-items: center;">
-            <button class="btn btn-success" style="width: auto; margin:0;" onclick="executeAction('family_checkin', 'เช็คอินมาหาแล้ว')"><i class="fa-solid fa-location-dot"></i> Check-in ลูกหลาน</button>
-            <div class="status-badge"><div class="dot" id="online-dot"></div><span id="online-text" style="font-weight: 700;">ออฟไลน์</span></div>
+            <input type="text" id="system-id" class="form-input" style="margin:0; width: 150px;" value="ELDER_001" placeholder="ใส่ System ID">
+            <div class="status-badge">
+                <div class="dot" id="online-dot"></div>
+                <span id="online-text">ออฟไลน์</span>
+            </div>
+            <button class="btn btn-success" style="width: auto;" onclick="quickCheckin()"><i class="fa-solid fa-user-check"></i> เช็คอินแล้ว</button>
         </div>
     </div>
 
     <div id="sos-alert">
-        <div><h2 style="color: var(--danger); font-size: 24px; font-weight: 900;"><i class="fa-solid fa-triangle-exclamation"></i> สัญญาณฉุกเฉิน (SOS)!</h2></div>
-        <button onclick="resolveSOS()" class="btn btn-danger" style="width: auto; margin: 0;"><i class="fa-solid fa-check-double"></i> เคลียร์เคส</button>
+        <div>
+            <h2 style="font-size: 28px; font-weight: 900;"><i class="fa-solid fa-triangle-exclamation"></i> ตรวจพบเหตุฉุกเฉิน (SOS)!</h2>
+            <p id="sos-time">แจ้งเมื่อสักครู่</p>
+        </div>
+        <button onclick="resolveSOS()" class="btn" style="background: white; color: var(--danger); width: auto; padding: 15px 30px;">รับทราบและช่วยเหลือแล้ว</button>
     </div>
 
     <div class="grid">
-        <div class="card" style="grid-column: span 2;">
-            <div class="card-header"><i class="fa-solid fa-desktop" style="color: var(--primary);"></i> สถานะคุณตาวันนี้ & แผนที่</div>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px;">
-                <div class="data-box"><p style="color: var(--sub);">ตื่นนอน</p><h3 id="disp-morning" style="color: var(--warning);">ยังไม่ตื่น</h3></div>
-                <div class="data-box"><p style="color: var(--sub);">ดื่มน้ำ</p><h3 id="disp-water" style="color: #0EA5E9;">0 แก้ว</h3></div>
-                <div class="data-box"><p style="color: var(--sub);">อารมณ์</p><h3 id="disp-mood" style="color: var(--success);">-</h3></div>
-                <div class="data-box"><p style="color: var(--sub);">การกินยา</p><h3 id="disp-pill" style="color: var(--primary);">-</h3></div>
+        <div class="card col-8">
+            <div class="card-header"><i class="fa-solid fa-chart-line" style="color:var(--primary)"></i> สถานะคุณตา & ตำแหน่งปัจจุบัน</div>
+            <div class="stat-grid">
+                <div class="stat-item"><div class="stat-label">ตื่นนอน</div><div class="stat-value" id="val-morning">-</div></div>
+                <div class="stat-item"><div class="stat-label">น้ำที่ดื่ม</div><div class="stat-value" id="val-water" style="color:#38BDF8">0 แก้ว</div></div>
+                <div class="stat-item"><div class="stat-label">อารมณ์</div><div class="stat-value" id="val-mood">-</div></div>
+                <div class="stat-item"><div class="stat-label">การกินยา</div><div class="stat-value" id="val-pill" style="color:var(--success)">-</div></div>
             </div>
             <div id="gps-map"></div>
         </div>
 
-        <div class="card">
-            <div class="card-header"><i class="fa-solid fa-walkie-talkie" style="color: var(--warning);"></i> สื่อสาร & ควบคุม</div>
-            <button class="btn btn-primary" onclick="startVideoCall()" style="background: #8B5CF6;"><i class="fa-solid fa-video"></i> บังคับเปิดกล้องคุณตา</button>
-            <div style="display: flex; gap: 5px; margin-bottom: 15px;">
-                <input type="text" id="intercom-msg" class="form-control" style="margin:0;" placeholder="พิมพ์เสียงประกาศ...">
-                <button class="btn btn-warning" style="width: auto; margin:0;" onclick="sendIntercom()"><i class="fa-solid fa-bullhorn"></i></button>
+        <div class="card col-4">
+            <div class="card-header"><i class="fa-solid fa-comment-dots" style="color:var(--warning)"></i> สื่อสารระยะไกล</div>
+            <button class="btn btn-primary" style="margin-bottom: 15px; height: 60px; font-size: 18px;" onclick="startVideoCall()">
+                <i class="fa-solid fa-video"></i> บังคับเปิดกล้องคุณตา
+            </button>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="font-size: 13px; color: var(--sub);">ส่งข้อความประกาศ (Intercom)</label>
+                <div style="display: flex; gap: 8px; margin-top: 5px;">
+                    <input type="text" id="intercom-msg" class="form-input" style="margin:0;" placeholder="เช่น ได้เวลาทานยาแล้ว...">
+                    <button class="btn btn-warning" style="width: 60px;" onclick="sendIntercom()"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
             </div>
-            <div class="card-header" style="font-size: 16px;"><i class="fa-solid fa-microphone"></i> ข้อความเสียงจากคุณตา</div>
-            <div id="voice-log" style="height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
-                <div style="color: var(--sub); text-align: center;">ไม่มีข้อความเสียง</div>
+
+            <div class="card-header" style="font-size: 16px; margin-bottom: 10px;"><i class="fa-solid fa-microphone"></i> บันทึกเสียงจากคุณตา</div>
+            <div class="voice-log" id="voice-log">
+                <div style="text-align: center; color: var(--sub); margin-top: 50px;">ไม่มีข้อความใหม่</div>
             </div>
         </div>
 
-        <div class="card" style="grid-column: span 3;">
-            <div class="card-header"><i class="fa-solid fa-pen-to-square" style="color: var(--success);"></i> อัปเดตข้อมูลให้หน้าจอคุณตา</div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                <div>
-                    <input type="text" id="appoint-input" class="form-control" placeholder="นัดหมอ: รพ.ชลบุรี (15/05)">
-                    <button class="btn btn-success" onclick="saveData('appoint')">บันทึกนัดหมอ</button>
+        <div class="card col-12">
+            <div class="card-header"><i class="fa-solid fa-gear" style="color:var(--success)"></i> จัดการข้อมูลหน้าจอคุณตา</div>
+            <div class="grid" style="gap: 15px; width: 100%;">
+                <div style="grid-column: span 3;">
+                    <label style="font-size: 13px; color: var(--sub);">นัดหมายหมอ</label>
+                    <input type="text" id="input-appoint" class="form-input" placeholder="รพ.ชลบุรี (10:00 น.)">
+                    <button class="btn btn-primary" onclick="updateField('appoint')">อัปเดตนัดหมาย</button>
                 </div>
-                <div>
-                    <input type="text" id="pill-input" class="form-control" placeholder="ตารางยา: ยาความดัน (เช้า)">
-                    <button class="btn btn-primary" onclick="saveData('pill')">บันทึกตารางยา</button>
+                <div style="grid-column: span 3;">
+                    <label style="font-size: 13px; color: var(--sub);">ตารางการกินยา</label>
+                    <input type="text" id="input-pill" class="form-input" placeholder="ยาเบาหวาน หลังอาหาร">
+                    <button class="btn btn-success" onclick="updateField('pill')">อัปเดตตารางยา</button>
                 </div>
-                <div>
-                    <textarea id="medical-input" class="form-control" rows="2" placeholder="Medical ID: กรุ๊ปเลือด O"></textarea>
-                    <button class="btn btn-danger" onclick="saveData('medical')">อัปเดต Medical ID</button>
-                </div>
-                <div style="grid-column: span 3; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
-                    <p style="color: var(--sub); font-size: 14px; margin-bottom: 10px;">อัปโหลดรูปภาพ (ใช้ ImgBB API ฟรี)</p>
+                <div style="grid-column: span 6;">
+                    <label style="font-size: 13px; color: var(--sub);">อัปโหลดรูปภาพใหม่ (ImgBB)</label>
                     <div style="display: flex; gap: 10px;">
-                        <input type="text" id="imgbb-api" class="form-control" style="width: 30%; margin:0;" placeholder="ImgBB API Key">
-                        <input type="file" id="photo-file" class="form-control" style="width: 40%; margin:0;" accept="image/*">
-                        <button class="btn btn-warning" style="width: 30%; margin:0;" onclick="uploadToImgBB()" id="btn-upload">อัปโหลดรูปเข้าระบบ</button>
+                        <input type="text" id="imgbb-key" class="form-input" style="width: 30%; margin:0;" placeholder="API Key">
+                        <input type="file" id="photo-file" class="form-input" style="flex: 1; margin:0;">
+                        <button class="btn btn-warning" style="width: auto;" onclick="uploadPhoto()" id="btn-upload">อัปโหลดรูป</button>
                     </div>
                 </div>
             </div>
@@ -120,103 +157,176 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby8enGt2JJA8RwqoyX4xcQXGjpDBVpGly5QKxM_WrR5hMJqEW2gJu_rCL6063BNXPY/exec";
-        const TOPIC = "familycare_all_in_one_123/";
+        // --- Setup ---
+        const SCRIPT_URL = "YOUR_GAS_URL"; // ใส่ URL ของ GAS มึงที่นี่
+        let TOPIC_PREFIX = "familycare/" + document.getElementById('system-id').value;
         const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-        let api = null, onlineTimeout, map, mapMarker;
+        let map, marker, jitsiApi, onlineTimer;
 
-        window.onload = () => { initMap(); fetchGASData(); };
+        // --- Init ---
+        window.onload = () => {
+            initMap();
+            fetchData();
+            // เมื่อเปลี่ยน ID ให้เปลี่ยน Topic อัตโนมัติ
+            document.getElementById('system-id').onchange = () => {
+                client.unsubscribe(TOPIC_PREFIX + "/status/#");
+                TOPIC_PREFIX = "familycare/" + document.getElementById('system-id').value;
+                client.subscribe(TOPIC_PREFIX + "/status/#");
+            };
+        };
 
-        // --- MQTT ---
-        client.on('connect', () => { client.subscribe(TOPIC + 'elderly/#'); });
-        client.on('message', (topic, message) => {
-            const action = topic.split('/').pop(); const msg = message.toString();
-            if (action === 'heartbeat') {
-                document.getElementById('online-dot').classList.add('online'); document.getElementById('online-text').innerText = "ออนไลน์ 🟢";
-                clearTimeout(onlineTimeout);
-                onlineTimeout = setTimeout(() => { document.getElementById('online-dot').classList.remove('online'); document.getElementById('online-text').innerText = "ออฟไลน์ 🔴"; }, 6000);
-            }
-            else if (action === 'sos') { document.getElementById('sos-alert').style.display = 'flex'; new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg').play(); fetchGASData(); }
-            else if (action === 'voice_msg') { alert("🎙️ มีข้อความเสียงใหม่จากคุณตา!"); fetchGASData(); }
-            else if (action === 'ping_update') { fetchGASData(); }
-        });
-
-        function sendMQTTPing(type, payload = "") { client.publish(TOPIC + 'admin/' + type, payload); }
-        function sendIntercom() { let msg = document.getElementById('intercom-msg').value; if(msg) { sendMQTTPing('intercom', msg); document.getElementById('intercom-msg').value = ''; } }
-
-        // --- GAS Data ---
-        async function fetchGASData() {
-            try {
-                const res = await fetch(SCRIPT_URL); const result = await res.json();
-                if (result.status === "success") {
-                    let d = result.data;
-                    document.getElementById('disp-morning').innerText = d.morningCheckin ? "ตื่นแล้ว ☀️" : "ยังไม่ตื่น";
-                    document.getElementById('disp-morning').style.color = d.morningCheckin ? "var(--success)" : "var(--warning)";
-                    document.getElementById('disp-water').innerText = d.waterCount + " แก้ว";
-                    document.getElementById('disp-mood').innerText = d.latestMood.replace("อารมณ์: ", "");
-                    document.getElementById('disp-pill').innerText = d.latestPill.replace("ตารางยา: ", "");
-
-                    let voiceBox = document.getElementById('voice-log');
-                    if (d.voiceMsgs.length > 0) {
-                        voiceBox.innerHTML = "";
-                        d.voiceMsgs.forEach(v => { voiceBox.innerHTML += `<div class="voice-msg"><span style="color:var(--sub);font-size:12px;">${v.time}</span> <br><b>${v.msg}</b></div>`; });
-                    }
-
-                    if (d.isSosActive) {
-                        document.getElementById('sos-alert').style.display = 'flex';
-                        let match = d.sosDetail.match(/q=([\d.-]+),([\d.-]+)/);
-                        if(match) updateMapLocation(parseFloat(match[1]), parseFloat(match[2]));
-                    } else {
-                        document.getElementById('sos-alert').style.display = 'none';
-                        if(mapMarker) { map.removeLayer(mapMarker); mapMarker = null; }
-                        map.setView([13.7563, 100.5018], 5);
-                    }
-                }
-            } catch(e) {}
+        function initMap() {
+            map = L.map('gps-map').setView([13.7563, 100.5018], 6);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
         }
 
-        async function executeAction(action, details) {
+        // --- MQTT Logic ---
+        client.on('connect', () => {
+            client.subscribe(TOPIC_PREFIX + "/status/#");
+        });
+
+        client.on('message', (topic, message) => {
+            const data = JSON.parse(message.toString());
+            const type = topic.split('/').pop();
+
+            if (type === 'heartbeat' || type === 'status') {
+                updateOnlineStatus();
+                fetchData(); // ดึงข้อมูลใหม่จาก GAS เมื่อมีการอัปเดต
+            }
+
+            if (data.action === 'sos') {
+                triggerSOSAlert(data.detail);
+            }
+        });
+
+        function updateOnlineStatus() {
+            const dot = document.getElementById('online-dot');
+            const txt = document.getElementById('online-text');
+            dot.classList.add('online');
+            txt.innerText = "ออนไลน์ 🟢";
+            
+            clearTimeout(onlineTimer);
+            onlineTimer = setTimeout(() => {
+                dot.classList.remove('online');
+                txt.innerText = "ออฟไลน์ 🔴";
+            }, 7000);
+        }
+
+        // --- Data Handling ---
+        async function fetchData() {
             try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: action, details: details }), headers: { "Content-Type": "text/plain;charset=utf-8" }});
-                sendMQTTPing('ping_update'); fetchGASData(); alert("บันทึกสำเร็จ!");
+                const res = await fetch(SCRIPT_URL);
+                const result = await res.json();
+                if (result.status === "success") {
+                    const d = result.data;
+                    document.getElementById('val-morning').innerText = d.morningCheckin ? "ตื่นแล้ว ☀️" : "ยังไม่ตื่น";
+                    document.getElementById('val-water').innerText = (d.waterCount || 0) + " แก้ว";
+                    document.getElementById('val-mood').innerText = d.latestMood || "-";
+                    document.getElementById('val-pill').innerText = (d.latestPill || "").replace("ตารางยา: ", "");
+                    
+                    // Voice Logs
+                    const logBox = document.getElementById('voice-log');
+                    if (d.voiceMsgs && d.voiceMsgs.length > 0) {
+                        logBox.innerHTML = d.voiceMsgs.map(m => `
+                            <div class="voice-item">
+                                <small style="color:var(--sub)">${m.time}</small><br>
+                                <strong>${m.msg}</strong>
+                            </div>
+                        `).join('');
+                    }
+
+                    if (d.isSosActive) triggerSOSAlert(d.sosDetail);
+                }
+            } catch (e) { console.error("Fetch Error", e); }
+        }
+
+        async function updateField(type) {
+            let val = "";
+            let action = "";
+            if (type === 'appoint') { val = document.getElementById('input-appoint').value; action = "save_appointment"; }
+            if (type === 'pill') { val = document.getElementById('input-pill').value; action = "save_pill"; }
+            
+            if (!val) return;
+            await callGAS(action, val);
+            client.publish(TOPIC_PREFIX + "/command/update", "ping");
+            alert("อัปเดตเรียบร้อย!");
+        }
+
+        async function callGAS(action, details) {
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action, details }) });
+                fetchData();
             } catch (e) {}
         }
 
-        function saveData(type) {
-            if(type === 'appoint') { let v = document.getElementById('appoint-input').value; if(v) { executeAction('save_appointment', v); document.getElementById('appoint-input').value = ''; } } 
-            else if(type === 'pill') { let v = document.getElementById('pill-input').value; if(v) { executeAction('save_pill', v); document.getElementById('pill-input').value = ''; } } 
-            else if(type === 'medical') { let v = document.getElementById('medical-input').value; if(v) { executeAction('medical_update', v); document.getElementById('medical-input').value = ''; } } 
+        // --- Commands ---
+        function sendIntercom() {
+            const msg = document.getElementById('intercom-msg').value;
+            if (msg) {
+                client.publish(TOPIC_PREFIX + "/command/alert", msg);
+                document.getElementById('intercom-msg').value = "";
+                alert("ส่งประกาศเสียงแล้ว");
+            }
         }
 
-        function resolveSOS() { executeAction('sos_resolved', 'เคลียร์เคสฉุกเฉินแล้ว'); }
-
-        // --- Map & ImgBB ---
-        function initMap() { map = L.map('gps-map').setView([13.7563, 100.5018], 5); L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map); }
-        function updateMapLocation(lat, lng) {
-            if(!map) return; map.setView([lat, lng], 16); if(mapMarker) map.removeLayer(mapMarker);
-            let cIcon = L.divIcon({ className: '', html: "<div style='background:#EF4444; width:20px; height:20px; border-radius:50%; border:3px solid white; box-shadow: 0 0 15px #EF4444; animation: pulseRed 1.5s infinite;'></div>", iconSize: [20, 20] });
-            mapMarker = L.marker([lat, lng], {icon: cIcon}).addTo(map).bindPopup('<b style="color:black;">พิกัดฉุกเฉิน!</b>').openPopup();
+        function triggerSOSAlert(detail) {
+            document.getElementById('sos-alert').style.display = 'flex';
+            new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg').play();
+            
+            // ปักหมุดแผนที่ถ้ามีพิกัด
+            const coords = detail.match(/Lat: ([\d.-]+), Lng: ([\d.-]+)/);
+            if (coords) {
+                const lat = parseFloat(coords[1]), lng = parseFloat(coords[2]);
+                map.setView([lat, lng], 17);
+                if (marker) map.removeLayer(marker);
+                marker = L.marker([lat, lng]).addTo(map).bindPopup("<b>คุณตาอยู่ที่นี่!</b>").openPopup();
+            }
         }
 
-        async function uploadToImgBB() {
-            const apiKey = document.getElementById('imgbb-api').value; const fileInput = document.getElementById('photo-file');
-            if(!apiKey || fileInput.files.length === 0) return alert("ใส่ API Key และเลือกรูปก่อน!");
-            document.getElementById('btn-upload').innerText = "กำลังอัปโหลด...";
-            let formData = new FormData(); formData.append('image', fileInput.files[0]);
-            try {
-                let res = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, { method: 'POST', body: formData });
-                let data = await res.json();
-                if(data.success) { executeAction('save_photo', data.data.url); document.getElementById('photo-file').value = ''; } 
-                else { alert("อัปโหลดไม่สำเร็จ"); }
-            } catch(e) { alert("Error uploading"); }
-            document.getElementById('btn-upload').innerText = "อัปโหลดรูปลงระบบ";
+        function resolveSOS() {
+            document.getElementById('sos-alert').style.display = 'none';
+            callGAS("sos_resolved", "เคลียร์เคสแล้ว");
         }
 
+        // --- Video Call ---
         function startVideoCall() {
-            sendMQTTPing('video', 'start'); document.getElementById('video-modal').style.display = 'flex';
-            api = new JitsiMeetExternalAPI('meet.jit.si', { roomName: 'FamilyCare_AllInOne_888', width: '100%', height: '100%', parentNode: document.querySelector('#jitsi-container'), userInfo: { displayName: 'ผู้ดูแล' } });
+            client.publish(TOPIC_PREFIX + "/command/video", "start");
+            document.getElementById('video-modal').style.display = 'flex';
+            jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", {
+                roomName: "FamilyCare_" + document.getElementById('system-id').value,
+                parentNode: document.getElementById('jitsi-container'),
+                width: "100%", height: "100%"
+            });
         }
-        function endVideoCall() { if(api) api.dispose(); document.getElementById('video-modal').style.display = 'none'; sendMQTTPing('video', 'stop'); }
+
+        function endVideoCall() {
+            if (jitsiApi) jitsiApi.dispose();
+            document.getElementById('video-modal').style.display = 'none';
+            client.publish(TOPIC_PREFIX + "/command/video", "stop");
+        }
+
+        // --- Photo Upload ---
+        async function uploadPhoto() {
+            const key = document.getElementById('imgbb-key').value;
+            const file = document.getElementById('photo-file').files[0];
+            if (!key || !file) return alert("กรุณาใส่ API Key และเลือกรูป");
+
+            const btn = document.getElementById('btn-upload');
+            btn.innerText = "กำลังอัปโหลด...";
+            
+            let formData = new FormData();
+            formData.append("image", file);
+
+            try {
+                const res = await fetch(`https://api.imgbb.com/1/upload?key=${key}`, { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    await callGAS("save_photo", data.data.url);
+                    alert("ส่งรูปให้คุณตาแล้ว!");
+                }
+            } catch (e) { alert("อัปโหลดพลาด"); }
+            btn.innerText = "อัปโหลดรูป";
+        }
     </script>
 </body>
 </html>
