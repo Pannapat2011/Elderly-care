@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elderly Care - Smart Display (Ultimate Edition)</title>
+    <title>Elderly Care - Smart Display (Ultimate Fixed)</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -71,7 +71,16 @@
         .flashing { animation: flashBang 0.5s infinite !important; }
         @keyframes flashBang { 0%, 100% { background: var(--samsung-bg); } 50% { background: white; } }
 
-        /* 🟢 Smart Display Mode (Digital Photo Frame) */
+        /* 🟢 Health Form */
+        .health-row { display: flex; justify-content: space-between; align-items: center; background: var(--samsung-bg); padding: 12px 20px; border-radius: 20px; margin-bottom: 10px; font-weight: bold;}
+        .qty-controls { display: flex; align-items: center; gap: 15px; }
+        .qty-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: #e5e5ea; font-size: 1.5rem; color: var(--text-title); }
+        .val-disp { width: 40px; text-align: center; font-size: 1.4rem; color: var(--samsung-primary); }
+        .symp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;}
+        .symp-btn { padding: 10px 5px; border-radius: 12px; border: none; background: var(--samsung-bg); color: var(--text-sub); font-weight: bold;}
+        .symp-btn.active.l0 { background: var(--samsung-success); color:white;} .symp-btn.active.l1 { background: var(--samsung-primary); color:white;} .symp-btn.active.l2 { background: var(--samsung-warning); color:white;} .symp-btn.active.l3 { background: var(--samsung-danger); color:white;}
+
+        /* 🟢 Smart Display Mode */
         #screensaver { 
             display: none; position: fixed; inset: 0; z-index: 900; 
             background-color: #000; background-size: cover; background-position: center; 
@@ -110,9 +119,10 @@
         <div class="modal">
             <div class="call-avatar"><i class="fa-solid fa-phone-volume"></i></div>
             <h2 style="margin-bottom: 5px;">ลูกหลานโทรมา</h2>
-            <div style="display:flex; gap:10px; margin-top:20px;">
+            <p style="color:var(--text-sub); margin-bottom: 20px;">จะเปิดไมค์รับสายอัตโนมัติใน <span id="auto-answer-timer"></span> วินาที</p>
+            <div style="display:flex; gap:10px;">
                 <button class="btn-cf" style="background:var(--samsung-danger); flex:1;" onclick="rejectCall()"><i class="fa-solid fa-phone-slash"></i> วางสาย</button>
-                <button class="btn-cf" id="btn-answer-call" style="background:var(--samsung-success); flex:1;" onclick="answerCall()"><i class="fa-solid fa-phone"></i> รับสาย <span id="auto-answer-timer"></span></button>
+                <button class="btn-cf" id="btn-answer-call" style="background:var(--samsung-success); flex:1;" onclick="answerCall()"><i class="fa-solid fa-phone"></i> รับสายเลย</button>
             </div>
         </div>
     </div>
@@ -124,6 +134,34 @@
         </div>
     </div>
 
+    <div id="health-modal" class="overlay" style="align-items:flex-end;">
+        <div class="modal" style="border-radius: 35px 35px 0 0; max-width:100%;">
+            <div style="width:40px; height:5px; background:#ccc; border-radius:10px; margin: 0 auto 20px auto;"></div>
+            <h2 style="color: var(--samsung-success); margin-bottom: 20px;"><i class="fa-solid fa-stethoscope"></i> บันทึกสุขภาพ</h2>
+            
+            <div class="health-row"><span>นอน (ชม.)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('s', -1)">-</button><span class="val-disp" id="v-s">8</span><button class="qty-btn" onclick="adj('s', 1)">+</button></div></div>
+            <div class="health-row"><span><i class="fa-solid fa-droplet" style="color:var(--samsung-primary);"></i> ปัสสาวะ</span><div class="qty-controls"><button class="qty-btn" onclick="adj('u', -1)">-</button><span class="val-disp" id="v-u">3</span><button class="qty-btn" onclick="adj('u', 1)">+</button></div></div>
+            <div class="health-row"><span><i class="fa-solid fa-poop" style="color:#8b5a2b;"></i> อุจจาระ</span><div class="qty-controls"><button class="qty-btn" onclick="adj('f', -1)">-</button><span class="val-disp" id="v-f">1</span><button class="qty-btn" onclick="adj('f', 1)">+</button></div></div>
+            <div class="health-row"><span>ชีพจร (HR)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('hr', -5)">-</button><span class="val-disp" id="v-hr">80</span><button class="qty-btn" onclick="adj('hr', 5)">+</button></div></div>
+            <div class="health-row"><span>ออกซิเจน (O2)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('o2', -1)">-</button><span class="val-disp" id="v-o2">98</span><button class="qty-btn" onclick="adj('o2', 1)">+</button></div></div>
+            
+            <div style="background: var(--samsung-bg); padding: 15px; border-radius: 20px; margin-bottom: 10px;">
+                <span>ความดันโลหิต (SYS/DIA)</span>
+                <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:10px;">
+                    <div class="qty-controls"><button class="qty-btn" onclick="adj('sys', -5)">-</button><span class="val-disp" id="v-sys">120</span><button class="qty-btn" onclick="adj('sys', 5)">+</button></div><span style="font-size:2rem; font-weight:300; color:#ccc;">/</span>
+                    <div class="qty-controls"><button class="qty-btn" onclick="adj('dia', -5)">-</button><span class="val-disp" id="v-dia">80</span><button class="qty-btn" onclick="adj('dia', 5)">+</button></div>
+                </div>
+            </div>
+            <div style="background: var(--samsung-bg); padding: 15px; border-radius: 20px;">
+                <h3 style="color:var(--samsung-warning); font-size:1rem; margin-bottom:10px;">อาการเจ็บป่วย</h3>
+                <div style="text-align:left; font-size:0.9rem;">ปวดหัว</div><div class="symp-grid" id="g-head"><button class="symp-btn active l0" onclick="setSymp('head',0)">ไม่มี</button><button class="symp-btn" onclick="setSymp('head',1)">น้อย</button><button class="symp-btn" onclick="setSymp('head',2)">กลาง</button><button class="symp-btn" onclick="setSymp('head',3)">มาก</button></div>
+                <div style="text-align:left; font-size:0.9rem; margin-top:10px;">ปวดเมื่อย</div><div class="symp-grid" id="g-body"><button class="symp-btn active l0" onclick="setSymp('body',0)">ไม่มี</button><button class="symp-btn" onclick="setSymp('body',1)">น้อย</button><button class="symp-btn" onclick="setSymp('body',2)">กลาง</button><button class="symp-btn" onclick="setSymp('body',3)">มาก</button></div>
+            </div>
+            <button class="btn-cf" style="background: var(--samsung-success); margin-top:20px;" onclick="submitHealth()">บันทึกส่งให้ลูกหลาน</button>
+            <button class="btn-cf" style="background: transparent; border: none; color:var(--text-sub);" onclick="document.getElementById('health-modal').style.display='none'">ยกเลิก</button>
+        </div>
+    </div>
+
     <div id="medical-id-modal" class="overlay"><div class="modal" style="border: 2px solid var(--samsung-danger); text-align:left;"><h2 style="color:var(--samsung-danger); margin-bottom:20px; text-align:center;"><i class="fa-solid fa-user-doctor"></i> ประวัติการแพทย์</h2><div id="medical-content" style="font-size:1.1rem; line-height:1.8;"></div><button class="btn-cf" style="background:var(--samsung-danger); margin-top:20px;" onclick="document.getElementById('medical-id-modal').style.display='none'">ปิดหน้าต่าง</button></div></div>
     <div id="pill-cam-modal" class="overlay"><div class="modal"><h2 style="color:var(--samsung-primary); margin-bottom:15px;"><i class="fa-solid fa-camera"></i> ถ่ายรูปยืนยันยา</h2><video id="pill-cam-view" autoplay playsinline style="width:100%; border-radius:15px; transform: scaleX(-1); margin-bottom:15px;"></video><canvas id="pill-cam-canvas" style="display:none;"></canvas><button class="btn-cf" style="background:var(--samsung-success);" onclick="snapPillPhoto()">ถ่ายรูปยืนยัน</button><button class="btn-cf" style="background:var(--samsung-bg); color:var(--text-title);" onclick="closePillCam()">ข้าม</button></div></div>
     <div id="youtube-overlay" class="overlay"><div class="modal"><h2 style="color:red; margin-bottom:15px;"><i class="fa-brands fa-youtube"></i> วีดีโอจากลูกหลาน</h2><div id="youtube-container"></div><button class="btn-cf" style="background:var(--samsung-bg); color:var(--text-title);" onclick="closeYouTube()">ปิดวีดีโอ</button></div></div>
@@ -132,9 +170,10 @@
     <div id="alert-overlay" class="overlay"><div class="modal"><i class="fa-solid fa-bell fa-shake" style="font-size: 60px; color: var(--samsung-warning);"></i><h2 style="margin: 20px 0;" id="alert-msg"></h2><button class="btn-cf" style="background:var(--samsung-warning); color:white;" onclick="document.getElementById('alert-overlay').style.display='none'">รับทราบ</button></div></div>
 
     <div id="main-dashboard" style="flex-direction:column; height:100%; display:none;">
+        
         <div class="top-bar">
             <div class="user-pill"><i class="fa-solid fa-circle-user" style="color:var(--samsung-primary)"></i> <span id="elder-name-display">กำลังซิงค์...</span></div>
-            <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
+            <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-power-off"></i> ออกจากระบบ</button>
         </div>
 
         <div class="oneui-header">
@@ -150,12 +189,12 @@
             </div>
 
             <div class="grid-actions">
+                <button class="btn-samsung" onclick="document.getElementById('health-modal').style.display='flex'"><i class="fa-solid fa-heart-pulse" style="color: var(--samsung-danger);"></i>บันทึกสุขภาพ</button>
                 <button class="btn-samsung" onclick="drinkWater()"><i class="fa-solid fa-glass-water" style="color: var(--samsung-primary);"></i><span id="water-count">น้ำ (0)</span></button>
                 <button class="btn-samsung" onclick="showMedicalID()"><i class="fa-solid fa-user-doctor" style="color: var(--text-sub);"></i>ประวัติฉัน</button>
                 <button class="btn-samsung" onclick="openGame()"><i class="fa-solid fa-puzzle-piece" style="color: var(--samsung-success);"></i>ฝึกสมอง</button>
                 <button class="btn-samsung" onclick="toggleMusic()"><i class="fa-solid fa-music" style="color: #af52de;"></i>ฟังวิทยุ</button>
                 <button class="btn-samsung" onclick="openGallery()"><i class="fa-regular fa-images" style="color: var(--samsung-warning);"></i>อัลบั้มรูป</button>
-                <button class="btn-samsung" onclick="speak('ระบบพร้อมใช้งานค่ะ ขอให้คุณตาสุขภาพแข็งแรงนะคะ')"><i class="fa-solid fa-volume-high" style="color: #0ea5e9;"></i>ทดสอบเสียง</button>
             </div>
 
             <div class="card">
@@ -206,7 +245,6 @@
             }
         };
 
-        // 🟢 Login Fix
         async function login() {
             const id = document.getElementById('login-id').value, pass = document.getElementById('login-pass').value;
             if(!id || !pass) return showToast('กรุณากรอกรหัสและรหัสผ่านให้ครบ');
@@ -223,7 +261,6 @@
             } catch(e) { showToast('การเชื่อมต่อขัดข้อง'); }
         }
 
-        // 🟢 Logout
         function logout() { 
             if(confirm("แน่ใจหรือไม่ที่จะออกจากระบบ?")) { localStorage.removeItem('MY_SYSTEM_ID'); location.reload(); }
         }
@@ -231,7 +268,8 @@
         function loadLocalCache() {
             let p = JSON.parse(localStorage.getItem('elderProfile_' + SYSTEM_ID) || '{}');
             document.getElementById('elder-name-display').innerText = p.name || "คุณตา/คุณยาย";
-            document.getElementById('rescue-name-display').innerText = p.rescue_name || "ยังไม่มีข้อมูล"; document.getElementById('rescue-phone-display').innerText = p.rescue_phone || "ให้หลานตั้งค่า";
+            document.getElementById('rescue-name-display').innerText = p.rescue_name || "ยังไม่มีข้อมูล";
+            document.getElementById('rescue-phone-display').innerText = p.rescue_phone || "ให้หลานตั้งค่า";
             waterCount = parseInt(localStorage.getItem('waterCount_' + SYSTEM_ID) || "0"); document.getElementById('water-count').innerText = `น้ำ (${waterCount})`;
             let localPills = localStorage.getItem('pills_' + SYSTEM_ID); if(localPills) { pills = JSON.parse(localPills); renderPills(); }
             let localAppoints = localStorage.getItem('appoints_' + SYSTEM_ID); if(localAppoints) { appoints = JSON.parse(localAppoints); renderAppoints(); }
@@ -252,8 +290,9 @@
         function setupMQTT() {
             if(!client.connected) client.reconnect();
             client.subscribe(`familycare/${SYSTEM_ID}/command/#`);
+            client.subscribe(`familycare/${SYSTEM_ID}/webrtc/#`);
             
-            // 🟢 Heartbeat Sender
+            // 🟢 ยิง Heartbeat บอกหลานทุก 5 วิ
             setInterval(() => {
                 if(client.connected) client.publish(`familycare/${SYSTEM_ID}/status/heartbeat`, "1", {qos:0});
             }, 5000);
@@ -270,10 +309,15 @@
                 }
                 else if(action === 'pills_update') { pills = JSON.parse(payload); localStorage.setItem('pills_' + SYSTEM_ID, payload); renderPills(); }
                 else if(action === 'appoint') { appoints = JSON.parse(payload); localStorage.setItem('appoints_' + SYSTEM_ID, payload); renderAppoints(); }
+                else if(action === 'request_sync') { client.publish(`familycare/${SYSTEM_ID}/status/water`, waterCount.toString(), {qos:0}); }
                 else if(action === 'photo') { photos.push(payload); showToast("หลานส่งรูปมาให้ดูใหม่!"); speak("ลูกหลานส่งรูปภาพมาให้ดูใหม่ค่ะ"); }
-                else if(action === 'youtube') { let videoId = payload.includes("v=") ? payload.split("v=")[1].substring(0, 11) : payload.includes("youtu.be/") ? payload.split("youtu.be/")[1].substring(0, 11) : null; if(videoId) { document.getElementById('youtube-container').innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`; document.getElementById('youtube-overlay').style.display = 'flex'; wakeUp(); speak("เปิดยูทูปให้แล้วค่ะ"); } }
-                else if(action === 'find_device') { document.body.classList.add('flashing'); speak("ลูกหลานกำลังค้นหาเครื่องค่ะ"); setTimeout(() => { document.body.classList.remove('flashing'); }, 5000); }
-                else if(topic.includes('webrtc')) handleWebRTCSignal(action, payload);
+                else if(action === 'youtube') { let videoId = payload.includes("v=") ? payload.split("v=")[1].substring(0, 11) : payload.includes("youtu.be/") ? payload.split("youtu.be/")[1].substring(0, 11) : null; if(videoId) { document.getElementById('youtube-container').innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`; document.getElementById('youtube-overlay').style.display = 'flex'; wakeUp(); speak("เปิดวีดีโอให้แล้วค่ะ"); } }
+                else if(action === 'find_device') { 
+                    document.body.classList.add('flashing'); 
+                    speak("ลูกหลานกำลังค้นหาเครื่องค่ะ ลูกหลานกำลังค้นหาเครื่องค่ะ");
+                    setTimeout(() => { document.body.classList.remove('flashing'); }, 5000); 
+                }
+                else if(topic.includes('webrtc')) handleWebRTCSignal(action, payload, topic);
             });
         }
 
@@ -282,7 +326,8 @@
             if('speechSynthesis' in window) { 
                 window.speechSynthesis.cancel(); 
                 const msg = new SpeechSynthesisUtterance(txt); 
-                msg.lang = 'th-TH'; msg.rate = 0.9; 
+                msg.lang = 'th-TH'; 
+                msg.rate = 0.9; 
                 window.speechSynthesis.speak(msg); 
             } 
         }
@@ -291,6 +336,7 @@
         setInterval(() => {
             const now = new Date();
             const h = now.getHours(); const m = now.getMinutes(); const s = now.getSeconds();
+            
             if(s === 0 && pills.length > 0) {
                 let isMorning = (h === 8 && m === 0); let isNoon = (h === 12 && m === 0); let isEvening = (h === 17 && m === 0); let isBed = (h === 20 && m === 0);
                 if(isMorning || isNoon || isEvening || isBed) {
@@ -301,28 +347,66 @@
             }
         }, 1000);
 
-        // ของเก่า: ยา, หมอ, วิทยุ, เกม, แกลเลอรี่ อยู่ครบ
-        function renderPills() { const c = document.getElementById('pill-container'); if(pills.length === 0) return c.innerHTML = '<p style="text-align:center; color:var(--text-sub);">ไม่มีตารางยา</p>'; c.innerHTML = pills.map((p, i) => `<div class="list-item"><div><b style="font-size:1.1rem; color:${p.taken?'var(--text-sub)':'var(--text-title)'};">${p.name}</b><br><span style="font-size:0.8rem; color:var(--text-sub);">เหลือ ${p.qty} เม็ด</span></div><button class="btn-take-pill ${p.taken ? 'taken' : ''}" onclick="confirmPillTake(${i})">${p.taken ? '✔️ ทานแล้ว' : 'กินยา'}</button></div>`).join(''); }
-        function confirmPillTake(idx) { pills[idx].taken = true; if(pills[idx].qty > 0) pills[idx].qty--; localStorage.setItem('pills_' + SYSTEM_ID, JSON.stringify(pills)); renderPills(); showToast(`เก่งมากค่ะ ทานยา ${pills[idx].name} แล้ว`); speak(`เก่งมากค่ะ ทานยา ${pills[idx].name} เรียบร้อยแล้ว`); client.publish(`familycare/${SYSTEM_ID}/status/pill_taken`, pills[idx].name, {qos:0}); client.publish(`familycare/${SYSTEM_ID}/command/pills_update`, JSON.stringify(pills), { retain: true, qos:0 }); saveToCloud({ action: "updatePills", system_id: SYSTEM_ID, pills: JSON.stringify(pills) }); }
+        // 🟢 Health (ฟังก์ชันนี้กลับมาแล้ว!)
+        let hState = { s: 8, u: 3, f: 1, hr: 80, o2: 98, sys: 120, dia: 80, symp: { head: 0, stom: 0, tooth: 0, body: 0 } };
+        function adj(key, val) { hState[key] += val; if(hState[key] < 0) hState[key] = 0; document.getElementById('v-'+key).innerText = hState[key]; }
+        function setSymp(type, level) { hState.symp[type] = level; const btns = document.getElementById('g-'+type).children; for(let i=0; i<btns.length; i++) { btns[i].className = `symp-btn ${i===level ? 'active l'+i : ''}`; } }
+        function submitHealth() {
+            let res = { s: hState.s, u: hState.u, f: hState.f, hr: hState.hr, o2: hState.o2, bp: `${hState.sys}/${hState.dia}`, symp: hState.symp, time: new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) };
+            client.publish(`familycare/${SYSTEM_ID}/status/health`, JSON.stringify(res), {qos:0}); 
+            saveToCloud({ action: "updateHealth", system_id: SYSTEM_ID, health: JSON.stringify(res) });
+            document.getElementById('health-modal').style.display = 'none'; showToast("บันทึกส่งให้ลูกหลานแล้ว!");
+            speak("บันทึกข้อมูลสุขภาพเรียบร้อยแล้วค่ะ");
+        }
+
+        function renderPills() { 
+            const c = document.getElementById('pill-container'); if(pills.length === 0) return c.innerHTML = '<p style="text-align:center; color:var(--text-sub);">ไม่มีตารางยา</p>'; 
+            c.innerHTML = pills.map((p, i) => `<div class="list-item"><div><b style="font-size:1.1rem; color:${p.taken?'var(--text-sub)':'var(--text-title)'};">${p.name}</b><br><span style="font-size:0.8rem; color:var(--text-sub);">เหลือ ${p.qty} เม็ด</span></div><button class="btn-take-pill ${p.taken ? 'taken' : ''}" onclick="confirmPillTake(${i})">${p.taken ? '✔️ ทานแล้ว' : 'กินยา'}</button></div>`).join(''); 
+        }
+
+        function confirmPillTake(idx) { 
+            pills[idx].taken = true; if(pills[idx].qty > 0) pills[idx].qty--; 
+            localStorage.setItem('pills_' + SYSTEM_ID, JSON.stringify(pills)); 
+            renderPills(); 
+            showToast(`เก่งมากค่ะ ทานยา ${pills[idx].name} แล้ว`); 
+            speak(`เก่งมากค่ะ ทานยา ${pills[idx].name} เรียบร้อยแล้ว`);
+            client.publish(`familycare/${SYSTEM_ID}/status/pill_taken`, pills[idx].name, {qos:0}); 
+            client.publish(`familycare/${SYSTEM_ID}/command/pills_update`, JSON.stringify(pills), { retain: true, qos:0 }); 
+            saveToCloud({ action: "updatePills", system_id: SYSTEM_ID, pills: JSON.stringify(pills) });
+        }
+
         function renderAppoints() { const c = document.getElementById('disp-appoint'); if(appoints.length === 0) { c.innerHTML = '<div class="list-item" style="justify-content:center; color:var(--text-sub);">ไม่มีนัดหมาย</div>'; return; } c.innerHTML = appoints.map(a => `<div class="list-item"><div style="width:100%;"><span style="color:var(--samsung-primary); font-weight:bold;">${a.date} | ${a.time}</span><br><b style="font-size:1.1rem;">${a.text}</b></div></div>`).join(''); }
 
-        function drinkWater() { waterCount++; localStorage.setItem('waterCount_' + SYSTEM_ID, waterCount); document.getElementById('water-count').innerText = `น้ำ (${waterCount})`; client.publish(`familycare/${SYSTEM_ID}/status/water`, waterCount.toString(), {qos:0}); saveToCloud({ action: "updateWater", system_id: SYSTEM_ID, water: waterCount }); showToast("บันทึกดื่มน้ำ"); speak(`ดื่มน้ำแก้วที่ ${waterCount} แล้ว ชื่นใจจังเลยค่ะ`); }
-        function triggerSOS() { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({lat: 0, lng: 0})); document.body.classList.add('flashing'); setTimeout(() => { document.body.classList.remove('flashing'); }, 5000); showToast("🚨 ส่งฉุกเฉินแล้ว"); speak("กำลังส่งสัญญาณฉุกเฉินหาลูกหลานค่ะ กรุณารอสักครู่"); }
-        function showMedicalID() { const p = JSON.parse(localStorage.getItem('elderProfile_' + SYSTEM_ID) || '{}'); document.getElementById('medical-content').innerHTML = `<div style="background:var(--samsung-bg); padding:15px; border-radius:15px; margin-bottom:10px;"><b>อายุ:</b> ${p.age||'-'} ปี</div><div style="background:var(--samsung-bg); padding:15px; border-radius:15px; margin-bottom:10px;"><b>กรุ๊ปเลือด:</b> <span style="font-size:1.3rem; color:var(--samsung-danger); font-weight:bold;">${p.blood||'-'}</span></div><div style="background:var(--samsung-bg); padding:15px; border-radius:15px; margin-bottom:10px;"><b>โรคประจำตัว:</b> ${p.disease||'ไม่มี'}</div><div style="background:rgba(240,78,70,0.1); padding:15px; border-radius:15px; color:var(--samsung-danger);"><b>แพ้ยา/อาหาร:</b> <b>${p.allergy||'ไม่มี'}</b></div>`; document.getElementById('medical-id-modal').style.display = 'flex'; }
-        
-        function toggleMusic() { if(isMusicPlaying) { audioPlayer.pause(); showToast("ปิดวิทยุ"); } else { audioPlayer.play(); showToast("เปิดสถานีวิทยุ");} isMusicPlaying = !isMusicPlaying; }
-        function openGallery() { document.getElementById('gallery-overlay').style.display = 'flex'; viewIndex = photos.length - 1; updateGallery(); } function updateGallery() { document.getElementById('gallery-img').src = photos[viewIndex]; } function prevPhoto() { viewIndex = (viewIndex - 1 + photos.length) % photos.length; updateGallery(); } function nextPhoto() { viewIndex = (viewIndex + 1) % photos.length; updateGallery(); }
-        function closeYouTube() { document.getElementById('youtube-container').innerHTML = ""; document.getElementById('youtube-overlay').style.display = 'none'; }
-        function openGame() { document.getElementById('game-overlay').style.display = 'flex'; initGame(); } function closeGame() { document.getElementById('game-overlay').style.display = 'none'; } function initGame() { const b = document.getElementById('game-board'); b.innerHTML = ''; cards.sort(() => 0.5 - Math.random()); matches = 0; [fCard, sCard, locked] = [null, null, false]; cards.forEach(c => { let btn = document.createElement('button'); btn.className = 'memory-card'; btn.dataset.val = c; btn.onclick = () => flipCard(btn); b.appendChild(btn); }); } function flipCard(card) { if(locked || card === fCard || card.classList.contains('matched')) return; card.classList.add('flipped'); card.innerText = card.dataset.val; if(!fCard) { fCard = card; return; } sCard = card; locked = true; if(fCard.dataset.val === sCard.dataset.val) { fCard.classList.add('matched'); sCard.classList.add('matched'); matches++; if(matches === 4) setTimeout(() => { showToast("ชนะแล้ว! 🎉"); initGame(); }, 500); [fCard, sCard, locked] = [null, null, false]; } else { setTimeout(() => { fCard.classList.remove('flipped'); fCard.innerText = ''; sCard.classList.remove('flipped'); sCard.innerText = ''; [fCard, sCard, locked] = [null, null, false]; }, 1000); } }
+        function drinkWater() { 
+            waterCount++; localStorage.setItem('waterCount_' + SYSTEM_ID, waterCount); 
+            document.getElementById('water-count').innerText = `น้ำ (${waterCount})`; 
+            client.publish(`familycare/${SYSTEM_ID}/status/water`, waterCount.toString(), {qos:0}); 
+            showToast("บันทึกดื่มน้ำ"); 
+            speak(`ดื่มน้ำแก้วที่ ${waterCount} แล้ว ชื่นใจจังเลยค่ะ`);
+        }
 
-        // 🟢 นาฬิกา
+        function triggerSOS() { 
+            client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({lat: 0, lng: 0})); 
+            document.body.classList.add('flashing'); 
+            setTimeout(() => { document.body.classList.remove('flashing'); }, 5000); 
+            showToast("🚨 ส่งฉุกเฉินแล้ว"); 
+            speak("กำลังส่งสัญญาณฉุกเฉินหาลูกหลานค่ะ กรุณารอสักครู่");
+        }
+
+        function showMedicalID() { 
+            const p = JSON.parse(localStorage.getItem('elderProfile_' + SYSTEM_ID) || '{}'); 
+            document.getElementById('medical-content').innerHTML = `<div style="background:var(--samsung-bg); padding:15px; border-radius:15px; margin-bottom:10px;"><b>อายุ:</b> ${p.age||'-'} ปี</div><div style="background:var(--samsung-bg); padding:15px; border-radius:15px; margin-bottom:10px;"><b>กรุ๊ปเลือด:</b> <span style="font-size:1.3rem; color:var(--samsung-danger); font-weight:bold;">${p.blood||'-'}</span></div><div style="background:var(--samsung-bg); padding:15px; border-radius:15px; margin-bottom:10px;"><b>โรคประจำตัว:</b> ${p.disease||'ไม่มี'}</div><div style="background:rgba(240,78,70,0.1); padding:15px; border-radius:15px; color:var(--samsung-danger);"><b>แพ้ยา/อาหาร:</b> <b>${p.allergy||'ไม่มี'}</b></div>`; 
+            document.getElementById('medical-id-modal').style.display = 'flex'; 
+        }
+        
+        // 🟢 นาฬิกา 
         setInterval(() => { 
             const n = new Date(); const timeStr = n.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}); const dateStr = n.toLocaleDateString('th-TH', { weekday: 'long', month: 'long', day: 'numeric' });
             document.getElementById('clock').innerText = timeStr; document.getElementById('date').innerText = dateStr; 
             document.getElementById('ss-clock').innerText = timeStr; document.getElementById('ss-date').innerText = dateStr; 
         }, 1000);
 
-        // 🟢 Smart Display Mode & Inactivity Alert (6 Hrs)
+        // 🟢 Smart Display Mode
         let inactivityTimer = 0;
         ['click', 'touchstart', 'scroll'].forEach(evt => window.addEventListener(evt, () => { inactivityTimer = 0; document.body.classList.remove('night-mode'); }));
         function wakeUp() { inactivityTimer = 0; document.body.classList.remove('night-mode'); }
@@ -331,35 +415,58 @@
             inactivityTimer++; 
             if(inactivityTimer > 60) { 
                 document.body.classList.add('night-mode'); 
-                if(photos.length > 0 && inactivityTimer % 10 === 0) { document.getElementById('screensaver').style.backgroundImage = `url('${photos[viewIndex]}')`; viewIndex = (viewIndex + 1) % photos.length; } 
+                if(photos.length > 0 && inactivityTimer % 10 === 0) { 
+                    document.getElementById('screensaver').style.backgroundImage = `url('${photos[viewIndex]}')`; 
+                    viewIndex = (viewIndex + 1) % photos.length; 
+                } 
             } 
             if(inactivityTimer > 21600) { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({error: "INACTIVITY"}), {qos:1}); inactivityTimer = 0; } 
         }, 1000);
 
-        // 🟢 WebRTC (Auto-Answer)
-        let peerConnection; let localStream; let incomingOffer; let autoAnswerTimer; const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-        async function handleWebRTCSignal(type, payload) { 
-            if(type === 'offer') { 
-                incomingOffer = JSON.parse(payload); document.getElementById('ringtone').play(); document.getElementById('incoming-call-modal').style.display = 'flex'; wakeUp();
+        // 🟢 Media
+        function toggleMusic() { if(isMusicPlaying) { audioPlayer.pause(); showToast("ปิดวิทยุ"); } else { audioPlayer.play(); showToast("เปิดสถานีวิทยุ");} isMusicPlaying = !isMusicPlaying; }
+        function openGallery() { document.getElementById('gallery-overlay').style.display = 'flex'; viewIndex = photos.length - 1; updateGallery(); } function updateGallery() { document.getElementById('gallery-img').src = photos[viewIndex]; } function prevPhoto() { viewIndex = (viewIndex - 1 + photos.length) % photos.length; updateGallery(); } function nextPhoto() { viewIndex = (viewIndex + 1) % photos.length; updateGallery(); }
+        function closeYouTube() { document.getElementById('youtube-container').innerHTML = ""; document.getElementById('youtube-overlay').style.display = 'none'; }
+        function openGame() { document.getElementById('game-overlay').style.display = 'flex'; initGame(); } function closeGame() { document.getElementById('game-overlay').style.display = 'none'; } function initGame() { const b = document.getElementById('game-board'); b.innerHTML = ''; cards.sort(() => 0.5 - Math.random()); matches = 0; [fCard, sCard, locked] = [null, null, false]; cards.forEach(c => { let btn = document.createElement('button'); btn.className = 'memory-card'; btn.dataset.val = c; btn.onclick = () => flipCard(btn); b.appendChild(btn); }); } function flipCard(card) { if(locked || card === fCard || card.classList.contains('matched')) return; card.classList.add('flipped'); card.innerText = card.dataset.val; if(!fCard) { fCard = card; return; } sCard = card; locked = true; if(fCard.dataset.val === sCard.dataset.val) { fCard.classList.add('matched'); sCard.classList.add('matched'); matches++; if(matches === 4) setTimeout(() => { showToast("ชนะแล้ว! 🎉"); speak("เก่งมากค่ะ คุณตาชนะแล้ว"); initGame(); }, 500); [fCard, sCard, locked] = [null, null, false]; } else { setTimeout(() => { fCard.classList.remove('flipped'); fCard.innerText = ''; sCard.classList.remove('flipped'); sCard.innerText = ''; [fCard, sCard, locked] = [null, null, false]; }, 1000); } }
+
+        // 🟢 WebRTC Auto-Answer
+        let peerConnection; let localStream; let incomingOffer; let autoAnswerTimer; 
+        const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        
+        async function handleWebRTCSignal(action, payload, topic) { 
+            if(action === 'offer') { 
+                incomingOffer = JSON.parse(payload); 
+                let playPromise = document.getElementById('ringtone').play();
+                if (playPromise !== undefined) { playPromise.catch(error => { console.log("Ringtone blocked"); }); }
+
+                document.getElementById('incoming-call-modal').style.display = 'flex'; wakeUp();
+                
                 let countdown = 10; document.getElementById('auto-answer-timer').innerText = `(${countdown})`;
-                autoAnswerTimer = setInterval(() => { countdown--; document.getElementById('auto-answer-timer').innerText = `(${countdown})`; if(countdown <= 0) { clearInterval(autoAnswerTimer); answerCall(); speak("เปิดไมค์รับสายอัตโนมัติแล้วค่ะ"); } }, 1000);
+                autoAnswerTimer = setInterval(() => {
+                    countdown--; document.getElementById('auto-answer-timer').innerText = `(${countdown})`;
+                    if(countdown <= 0) { clearInterval(autoAnswerTimer); answerCall(); showToast("เปิดไมค์รับสายอัตโนมัติ"); speak("เปิดไมค์รับสายอัตโนมัติแล้วค่ะ"); }
+                }, 1000);
             } 
-            else if(type === 'candidate') { const candidate = JSON.parse(payload); if (peerConnection && peerConnection.remoteDescription) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); } 
-            else if(type === 'hangup') { endCallLocal(); showToast("อีกฝ่ายวางสายแล้ว"); } 
+            else if(action === 'candidate_family') { const candidate = JSON.parse(payload); if (peerConnection && peerConnection.remoteDescription) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); } 
+            else if(action === 'hangup') { endCallLocal(); showToast("อีกฝ่ายวางสายแล้ว"); } 
         }
+        
         async function answerCall() { 
             if(autoAnswerTimer) clearInterval(autoAnswerTimer); document.getElementById('ringtone').pause(); document.getElementById('incoming-call-modal').style.display = 'none'; document.getElementById('in-call-modal').style.display = 'flex'; 
             try { 
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); peerConnection = new RTCPeerConnection(rtcConfig); 
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream)); 
                 peerConnection.ontrack = event => { document.getElementById('remote-audio').srcObject = event.streams[0]; }; 
-                peerConnection.onicecandidate = event => { if (event.candidate) client.publish(`familycare/${SYSTEM_ID}/webrtc/candidate/elderly`, JSON.stringify(event.candidate)); }; 
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingOffer)); const answer = await peerConnection.createAnswer(); await peerConnection.setLocalDescription(answer); 
+                peerConnection.onicecandidate = event => { if (event.candidate) client.publish(`familycare/${SYSTEM_ID}/webrtc/candidate_elderly`, JSON.stringify(event.candidate)); }; 
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingOffer)); 
+                const answer = await peerConnection.createAnswer(); await peerConnection.setLocalDescription(answer); 
                 client.publish(`familycare/${SYSTEM_ID}/webrtc/answer`, JSON.stringify(answer)); 
             } catch (err) { showToast("ไมค์ขัดข้อง"); rejectCall(); } 
         }
+        
         function rejectCall() { if(autoAnswerTimer) clearInterval(autoAnswerTimer); document.getElementById('ringtone').pause(); client.publish(`familycare/${SYSTEM_ID}/webrtc/hangup`, "true"); endCallLocal(); }
         function endCallLocal() { if(autoAnswerTimer) clearInterval(autoAnswerTimer); document.getElementById('ringtone').pause(); document.getElementById('incoming-call-modal').style.display = 'none'; document.getElementById('in-call-modal').style.display = 'none'; if (peerConnection) { peerConnection.close(); peerConnection = null; } if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; } }
+
     </script>
 </body>
 </html>
