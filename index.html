@@ -3,431 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elderly Care (Medical Enterprise UI)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <title>Elderly Care - Smart Display (Ultimate Edition)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-    <script src="https://meet.jit.si/external_api.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --bg: #040914; --card: rgba(20, 27, 45, 0.7); --text: #FFFFFF; --primary: #0EA5E9; --primary-grad: linear-gradient(135deg, #0EA5E9, #3B82F6); --success: #10B981; --success-grad: linear-gradient(135deg, #10B981, #059669); --warning: #F59E0B; --warning-grad: linear-gradient(135deg, #F59E0B, #D97706); --danger: #EF4444; --danger-grad: linear-gradient(135deg, #EF4444, #B91C1C); }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; user-select: none; outline: none; -webkit-tap-highlight-color: transparent;}
-        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; transition: 0.5s; }
-        body::before { content: ''; position: absolute; top: -10%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 70%); z-index: -1; }
-        body::after { content: ''; position: absolute; bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%); z-index: -1; }
+        :root {
+            --samsung-bg: #f2f2f7; --samsung-card: #ffffff; --samsung-primary: #0381fe; 
+            --samsung-danger: #f04e46; --samsung-warning: #f7a300; --samsung-success: #2ecc71;
+            --text-title: #000000; --text-sub: #8e8e93; --radius: 30px;
+        }
+        body.night-mode { --samsung-bg: #000000; --samsung-card: #1c1c1e; --text-title: #ffffff; --text-sub: #aeaeb2; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { background: var(--samsung-bg); color: var(--text-title); min-height: 100vh; overflow-x: hidden; display: flex; flex-direction: column; transition: 0.3s;}
 
-        .glass { background: var(--card); backdrop-filter: blur(30px) saturate(150%); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 32px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4); }
-        input, select { width: 100%; padding: 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.4); color: white; font-size: 1.1rem; margin-bottom: 15px; transition: 0.4s;}
-        input:focus { border-color: var(--primary); background: rgba(0,0,0,0.6); }
+        /* Auth CSS */
+        #auth-screen { display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; min-height:100vh; }
+        input, select { width: 100%; padding: 18px; border-radius: 20px; border: 1px solid #d1d1d6; background: var(--samsung-bg); color: var(--text-title); font-size: 1rem; margin-bottom: 15px;}
+        .auth-container { background: var(--samsung-card); border-radius: var(--radius); padding: 30px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);}
 
-        .toast-container { position: fixed; top: 40px; left: 50%; transform: translateX(-50%); z-index: 10000; display: flex; flex-direction: column; gap: 12px; }
-        .toast { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 16px 30px; border-radius: 50px; font-weight: 600; display: flex; align-items: center; gap: 12px; animation: slideDown 0.5s forwards; }
-        .toast.success { border-left: 5px solid var(--success); } .toast.error { border-left: 5px solid var(--danger); } .toast.offline { border-left: 5px solid #94A3B8; background: rgba(71, 85, 105, 0.95); }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-40px); } to { opacity: 1; transform: translateY(0); } }
+        .top-bar { padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .user-pill { background: var(--samsung-card); padding: 10px 20px; border-radius: 50px; font-weight: bold; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); font-size: 1.1rem;}
+        .logout-btn { background: rgba(240, 78, 70, 0.1); border: none; color: var(--samsung-danger); padding: 10px 20px; border-radius: 50px; font-size: 1rem; font-weight: bold; display: flex; justify-content: center; align-items: center; transition: 0.2s; gap: 8px;}
+        .logout-btn:active { transform: scale(0.95); background: rgba(240, 78, 70, 0.2); }
+
+        .oneui-header { padding: 20px 25px 20px 25px; text-align: center; position: relative;}
+        .clock-section #clock { font-size: 5rem; font-weight: 300; letter-spacing: -2px; line-height: 1; }
+        .clock-section #date { font-size: 1.2rem; color: var(--samsung-primary); font-weight: 500; margin-top: 5px;}
+
+        .container { padding: 0 15px 120px 15px; display: flex; flex-direction: column; gap: 15px; }
+
+        .card { background: var(--samsung-card); border-radius: var(--radius); padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .card-header { font-size: 1.1rem; font-weight: 600; color: var(--samsung-primary); margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+
+        .grid-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .btn-samsung { background: var(--samsung-bg); border-radius: 24px; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--text-title); font-weight: 600; font-size: 0.9rem; border: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); user-select: none;}
+        .btn-samsung i { font-size: 2rem; pointer-events:none;}
+        .btn-samsung:active { transform: scale(0.95); background: #e5e5ea; }
+
+        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; z-index: 100; display: flex; gap: 10px;}
+        .btn-sos { flex: 4; background: var(--samsung-danger); color: white; padding: 25px; border-radius: var(--radius); font-size: 1.5rem; font-weight: 700; border: none; box-shadow: 0 8px 20px rgba(240, 78, 70, 0.3);}
+
+        .pill-list, .appoint-list { display: flex; flex-direction: column; gap: 10px;}
+        .list-item { background: var(--samsung-bg); border-radius: 20px; padding: 15px; display: flex; justify-content: space-between; align-items: center;}
+        .btn-take-pill { background: var(--samsung-success); color: white; border: none; padding: 10px 20px; font-weight: 700; border-radius: 16px; transition: 0.2s;}
+        .btn-take-pill.taken { background: #e5e5ea; color: var(--text-sub); pointer-events: none;}
+
+        .toast-container { position: fixed; top: 40px; left: 50%; transform: translateX(-50%); z-index: 10000; width: 90%; max-width: 400px; display:flex; flex-direction:column; gap:10px;}
+        .toast { background: rgba(0,0,0,0.85); color: white; padding: 15px 25px; border-radius: 50px; text-align: center; font-weight: 600;}
+
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px);}
+        .modal { background: var(--samsung-card); width: 100%; max-width: 400px; border-radius: 35px; padding: 30px; text-align:center; max-height:90vh; overflow-y:auto;}
+        .btn-cf { width: 100%; padding: 18px; border-radius: 20px; border: none; font-size: 1.1rem; font-weight: bold; margin-bottom:10px; color: white;}
+
+        .call-avatar { width: 120px; height: 120px; border-radius: 50%; background: var(--samsung-success); display: flex; align-items: center; justify-content: center; font-size: 4rem; margin: 0 auto 20px auto; color: white; animation: pulseCall 1s infinite;}
+        @keyframes pulseCall { 0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); } 100% { box-shadow: 0 0 0 30px rgba(46, 204, 113, 0); } }
+
+        #youtube-container iframe { width: 100%; height: 30vh; border-radius: 16px; border: none; margin-bottom:15px; }
+        #gallery-img { width: 100%; height: 35vh; object-fit: contain; border-radius: 16px; margin-bottom: 15px; background: #000;}
+        .gallery-controls { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
+        .gallery-btn { flex: 1; padding: 12px; background: var(--samsung-bg); border-radius: 12px; color: var(--text-title); font-weight: bold; border:none;}
+        #game-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; margin-bottom:15px;}
+        .memory-card { background: var(--samsung-bg); border: 2px solid var(--samsung-primary); border-radius: 15px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: transparent;}
+        .memory-card.flipped { background: var(--samsung-card); color: initial; transform: rotateY(180deg) scale(1.05);}
+        .memory-card.matched { background: var(--samsung-success); border-color: var(--samsung-success); color: white; pointer-events:none;}
         
-        .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(12px); z-index: 10001; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: 0.3s;}
-        .confirm-overlay.show { opacity: 1; pointer-events: auto;}
-        .confirm-box { background: rgba(20, 27, 45, 0.95); padding: 40px; border-radius: 36px; width: 90%; max-width: 450px; text-align: center; border: 1px solid rgba(255,255,255,0.15); transform: scale(0.8); transition: 0.3s;}
-        .confirm-overlay.show .confirm-box { transform: scale(1); }
-        .btn-cf { flex: 1; padding: 18px; border-radius: 20px; border: none; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.2s;}
-        .btn-cf:active { transform: scale(0.92); }
-
-        #auth-screen, #paywall-screen, #qr-screen { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
-        #main-dashboard { flex: 1; padding: 25px; display: none; flex-direction: column; gap: 20px; max-width: 1400px; margin: 0 auto; width: 100%; transition: 0.5s;}
-
-        .profile-bar { padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: 600; }
-        .btn-logout { background: rgba(255,255,255,0.08); color: white; border: 1px solid rgba(255,255,255,0.1); padding: 12px 24px; border-radius: 16px; cursor: pointer; display: flex; align-items: center; gap: 8px;}
-        
-        .header { text-align: center; margin-bottom: 5px; transition: 0.5s;}
-        .clock { font-size: clamp(4rem, 10vw, 7rem); font-weight: 800; background: linear-gradient(135deg, #E0F2FE, #38BDF8); -webkit-background-clip: text; color: transparent; line-height: 1; }
-        .date-text { font-size: clamp(1.1rem, 3vw, 1.5rem); color: var(--warning); margin-top: 5px; font-weight: 600; }
-        
-        .mood-bar { display:flex; justify-content:center; gap:25px; margin-top:20px; }
-        .mood-btn { appearance: none; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); font-size: 2.5rem; width: 75px; height: 75px; border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 10px 20px rgba(0,0,0,0.3);}
-
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; transition: 0.5s;}
-        .card-header { font-size: 1.5rem; color: #94A3B8; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
-        .pill-list { display: flex; flex-direction: column; gap: 15px; max-height: 250px; overflow-y: auto; padding-right: 10px;}
-        .pill-item { background: rgba(0,0,0,0.3); padding: 18px 25px; border-radius: 24px; border-left: 6px solid var(--warning); display:flex; justify-content:space-between; align-items:center;}
-        .pill-times { display:flex; gap:5px; margin-top:5px; font-size:0.9rem; color:#94A3B8;}
-        .pill-badge { background:rgba(255,255,255,0.1); padding:3px 8px; border-radius:10px;}
-        .btn-take-pill { background: var(--success-grad); color: white; border: none; padding: 14px 28px; font-size: 1.2rem; font-weight: 800; border-radius: 18px; cursor: pointer; }
-        .btn-take-pill.taken { background: #334155; color: #94A3B8; pointer-events: none; border-left-color: #334155;}
-        
-        .appoint-list { display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto;}
-        .appoint-item { background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); padding: 15px; border-radius: 20px; font-size:1.2rem; font-weight:bold;}
-
-        .action-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-top: auto; padding-bottom: 15px; transition: 0.5s;}
-        .btn-action { border: 1px solid rgba(255,255,255,0.08); padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 1rem; font-weight: 800; cursor: pointer; color: white; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); transition: 0.2s;}
-        .btn-action i { font-size: 2.5rem; }
-
-        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
-        
-        /* 🔴 ธีมกลางคืน (Night Mode / Digital Frame) */
-        body.night-mode { background: #000000; }
-        body.night-mode::before, body.night-mode::after { display: none; }
-        body.night-mode .grid-2, body.night-mode .action-bar, body.night-mode .profile-bar, body.night-mode .mood-bar { display: none !important; }
-        body.night-mode .header { margin-top: 20vh; z-index:910; position:relative;}
-        body.night-mode .clock { font-size: 8rem; background: none; color: #E2E8F0; filter:drop-shadow(0 5px 15px rgba(0,0,0,0.8)); }
-        body.night-mode .date-text { color: #CBD5E1; filter:drop-shadow(0 5px 15px rgba(0,0,0,0.8));}
-        body.night-mode .btn-sos-float { width: 80vw; left: 10vw; bottom: 50px; border-radius: 30px; height: 120px; font-size: 3rem; background: #B91C1C; z-index:920;}
-        body.night-mode .btn-siren-float, body.night-mode .btn-medical-float { display: none; }
-        
-        /* 🔴 รูปแบบ Screensaver (Digital Photo Frame) */
-        #screensaver { display: none; position: fixed; inset: 0; z-index: 900; background-color: #000; background-size: cover; background-position: center; background-repeat: no-repeat; filter: brightness(0.6); transition: background-image 1s ease-in-out;}
-        body.night-mode #screensaver { display: block; }
-
-        .btn-sos-float { position:fixed; bottom:30px; left:30px; width:80px; height:80px; border-radius:50%; background:var(--danger-grad); border:none; color:white; font-size:2.5rem; box-shadow:0 15px 30px rgba(239,68,68,0.4); z-index:900; cursor:pointer; transition:0.5s;}
-        .btn-siren-float { position:fixed; bottom:30px; right:30px; width:80px; height:80px; border-radius:50%; background:var(--warning-grad); border:none; color:white; font-size:2.5rem; box-shadow:0 15px 30px rgba(245,158,11,0.4); z-index:900; cursor:pointer;}
-        /* 🔴 ปุ่ม Medical ID ฉุกเฉินสำหรับกู้ภัย */
-        .btn-medical-float { position:fixed; top:30px; right:30px; width:120px; height:50px; border-radius:25px; background:var(--danger-grad); border:1px solid white; color:white; font-size:1.2rem; font-weight:bold; box-shadow:0 15px 30px rgba(239,68,68,0.5); z-index:900; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:8px; animation: pulse 2s infinite;}
-
-        .overlay { display: none; position: fixed; inset: 0; background: rgba(4, 9, 20, 0.9); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(15px);}
-        .modal { padding: 40px; text-align: center; max-width: 600px; width: 100%; border: 1px solid rgba(255,255,255,0.1); }
-        .btn-ack { background: var(--warning-grad); color: black; border: none; padding: 20px 40px; font-size: 1.4rem; font-weight: 800; border-radius: 24px; margin-top: 30px; width: 100%; cursor: pointer;}
-        #youtube-container iframe { width: 100%; height: 50vh; border-radius: 24px; border: none; }
-        #gallery-img { width: 100%; height: 40vh; object-fit: contain; border-radius: 20px; margin-bottom: 20px; background: rgba(0,0,0,0.5);}
-        .gallery-controls { display: flex; justify-content: space-between; gap: 15px; }
-        .gallery-btn { flex: 1; padding: 18px; background: rgba(255,255,255,0.1); border-radius: 20px; color: white; font-size: 1.2rem; border:none;}
-        #game-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px;}
-        .memory-card { background: rgba(14, 165, 233, 0.15); border: 2px solid var(--primary); border-radius: 20px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 3rem; cursor: pointer; color: transparent;}
-        .memory-card.flipped { background: white; color: initial; transform: rotateY(180deg) scale(1.05);}
-        .memory-card.matched { background: var(--success-grad); border-color: var(--success); color: white;}
-        .recording { animation: pulse-ring 1s infinite; background: var(--danger-grad) !important; border:none; }
-        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 100% { box-shadow: 0 0 0 25px rgba(239, 68, 68, 0); } }
-        @keyframes flashBang { 0%, 100% { background: var(--bg); } 50% { background: white; } }
         .flashing { animation: flashBang 0.5s infinite !important; }
+        @keyframes flashBang { 0%, 100% { background: var(--samsung-bg); } 50% { background: white; } }
 
-        .health-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 15px 20px; border-radius: 20px; margin-bottom: 12px; font-size: 1.2rem; font-weight: bold;}
-        .qty-controls { display: flex; align-items: center; gap: 15px; }
-        .qty-btn { width: 45px; height: 45px; border-radius: 50%; border: none; font-size: 1.8rem; font-weight: bold; background: var(--primary-grad); color: white; cursor: pointer; display:flex; justify-content:center; align-items:center; box-shadow: 0 5px 15px rgba(14,165,233,0.3);}
-        .val-disp { width: 60px; text-align: center; font-size: 1.8rem; color: var(--warning); }
-        .symp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px;}
-        .symp-btn { padding: 12px 5px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-weight: bold; cursor: pointer;}
-        .symp-btn.active.l0 { background: var(--success); border-color: var(--success); } .symp-btn.active.l1 { background: #38BDF8; border-color: #38BDF8; } .symp-btn.active.l2 { background: var(--warning); border-color: var(--warning); } .symp-btn.active.l3 { background: var(--danger); border-color: var(--danger); }
-        .symp-title { text-align: left; font-size: 1.1rem; color: #94A3B8; margin-top: 15px; margin-bottom: 5px; font-weight: bold;}
-
-        /* 🔴 Camera Pill Verification */
-        #pill-cam-view { width:100%; border-radius:20px; background:#000; transform: scaleX(-1); margin-bottom:20px;}
+        /* 🟢 Smart Display Mode (Digital Photo Frame) */
+        #screensaver { 
+            display: none; position: fixed; inset: 0; z-index: 900; 
+            background-color: #000; background-size: cover; background-position: center; 
+            flex-direction: column; justify-content: center; align-items: center;
+            transition: background-image 2s ease-in-out;
+        }
+        #screensaver::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.5); z-index: 1; }
+        .ss-content { position: relative; z-index: 2; text-align: center; color: white; text-shadow: 0 4px 20px rgba(0,0,0,0.8); }
+        .ss-clock { font-size: 8rem; font-weight: 300; line-height: 1; }
+        .ss-date { font-size: 1.8rem; font-weight: 500; margin-top: 10px; color: #f2f2f7;}
         
-        /* 🔴 Medical ID Data */
-        .med-id-row { background:rgba(0,0,0,0.3); padding: 15px; border-radius:15px; margin-bottom:10px; text-align:left; font-size:1.2rem;}
-        .med-id-row span { color: var(--warning); font-weight:bold;}
+        body.night-mode #screensaver { display: flex; }
+        body.night-mode #main-dashboard { display: none !important; }
     </style>
 </head>
 <body>
-
     <div id="toast-container" class="toast-container"></div>
-    <div class="confirm-overlay" id="confirm-overlay"><div class="confirm-box"><i class="fa-solid fa-circle-question" style="font-size: 70px; color: var(--primary); margin-bottom: 25px;"></i><h2 id="confirm-msg" style="margin-bottom: 35px; color: white;"></h2><div style="display:flex; gap:15px;"><button class="btn-cf" style="background:rgba(255,255,255,0.1);" onclick="window.cancelCallback()">ยกเลิก</button><button class="btn-cf" style="background:var(--danger-grad);" onclick="window.confirmCallback()">ตกลง</button></div></div></div>
+    <audio id="remote-audio" autoplay></audio>
+    <audio id="ringtone" src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg" loop></audio>
+    <audio id="audio-player" src="https://listen.radioking.com/radio/15684/stream/29964"></audio>
 
     <div id="auth-screen">
-        <i class="fa-solid fa-house-medical" style="font-size: 90px; color: var(--primary); margin-bottom: 25px;"></i>
-        <h1 style="font-size: 3rem; margin-bottom: 30px;">Elderly Care</h1>
-        <div class="glass" style="padding: 40px; width: 100%; max-width: 450px;">
+        <i class="fa-solid fa-house-medical" style="font-size: 80px; color: var(--samsung-primary); margin-bottom: 20px;"></i>
+        <h1 style="font-size: 2.5rem; margin-bottom: 30px;">Elderly Care</h1>
+        <div class="auth-container">
             <div id="login-form">
-                <h2 style="margin-bottom: 25px; color:var(--primary);">เข้าสู่ระบบเครื่อง</h2>
+                <h2 style="margin-bottom: 20px; color:var(--samsung-primary);">เข้าสู่ระบบ</h2>
                 <input type="text" id="login-id" placeholder="รหัสเครื่อง (ELDER_XXXX)">
-                <input type="password" id="login-pass" placeholder="รหัสผ่าน">
-                <button class="btn-cf" style="width:100%; background:var(--success-grad); color:white; margin-bottom:20px;" onclick="login()">เข้าสู่ระบบ</button>
-                <p style="color:#94A3B8; cursor:pointer;" onclick="toggleAuth()">ยังไม่มีรหัส? <u style="color:var(--primary);">ลงทะเบียนใหม่</u></p>
-            </div>
-            <div id="reg-form" style="display:none;">
-                <h2 style="margin-bottom: 25px; color:var(--success);">สร้างเครื่องใหม่</h2>
-                <select id="reg-title"><option value="คุณตา">คุณตา</option><option value="คุณยาย">คุณยาย</option><option value="คุณปู่">คุณปู่</option><option value="คุณย่า">คุณย่า</option></select>
-                <input type="text" id="reg-name" placeholder="ชื่อเล่น">
-                <input type="password" id="reg-pass" placeholder="ตั้งรหัสผ่าน">
-                <button class="btn-cf" style="width:100%; background:var(--primary-grad); color:white; margin-bottom:20px;" onclick="register()">ลงทะเบียน</button>
-                <p style="color:#94A3B8; cursor:pointer;" onclick="toggleAuth()">มีรหัสอยู่แล้ว? <u style="color:var(--success);">เข้าสู่ระบบ</u></p>
+                <input type="password" id="login-pass" placeholder="รหัสผ่านที่ได้รับ">
+                <button class="btn-cf" style="background:var(--samsung-primary); margin-bottom: 0;" onclick="login()">เริ่มใช้งาน</button>
             </div>
         </div>
     </div>
 
-    <div id="qr-screen" style="display:none;">
-        <h1 style="font-size: 3rem;">เครื่องพร้อมใช้งาน!</h1>
-        <p style="color: #94A3B8; font-size: 1.3rem; margin-top:15px;">ให้ลูกหลานสแกน QR Code นี้</p>
-        <div class="glass" style="padding: 25px; margin: 30px 0; border-radius: 36px;"><div id="qrcode"></div></div>
-        <h2 id="display-id" style="color: var(--primary); letter-spacing: 4px; font-size: 2rem;"></h2>
-        <button class="btn-cf" style="background:var(--success-grad); color:white; width: 100%; max-width: 350px; margin-top:30px;" onclick="enterDashboard()">เข้าสู่หน้าจอ</button>
-    </div>
-
-    <div id="paywall-screen" style="display:none;">
-        <i class="fa-solid fa-lock" style="font-size: 120px; color: var(--danger); margin-bottom: 30px;"></i>
-        <h1 style="font-size: 3.5rem; color: white;">บริการถูกระงับ</h1>
-        <p style="color: #94A3B8; font-size: 1.6rem; margin-top:20px;">กรุณาให้ลูกหลานชำระค่าบริการ</p>
-    </div>
-
-    <div id="health-modal" class="overlay">
-        <div class="modal glass" style="max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 30px;">
-            <h2 style="color: var(--success); margin-bottom: 20px; font-size:2rem;"><i class="fa-solid fa-stethoscope"></i> บันทึกสุขภาพวันนี้</h2>
-            <div class="health-row"><span><i class="fa-solid fa-bed"></i> เวลานอน (ชม.)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('s', -1)">-</button><span class="val-disp" id="v-s">8</span><button class="qty-btn" onclick="adj('s', 1)">+</button></div></div>
-            <div class="health-row"><span><i class="fa-solid fa-droplet"></i> ปัสสาวะ (ครั้ง)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('u', -1)">-</button><span class="val-disp" id="v-u">3</span><button class="qty-btn" onclick="adj('u', 1)">+</button></div></div>
-            <div class="health-row"><span><i class="fa-solid fa-poop"></i> อุจจาระ (ครั้ง)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('f', -1)">-</button><span class="val-disp" id="v-f">1</span><button class="qty-btn" onclick="adj('f', 1)">+</button></div></div>
-            <div class="health-row"><span><i class="fa-solid fa-heart-pulse"></i> ชีพจร (BPM)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('hr', -5)">-</button><span class="val-disp" id="v-hr" style="width:70px;">80</span><button class="qty-btn" onclick="adj('hr', 5)">+</button></div></div>
-            <div class="health-row"><span><i class="fa-solid fa-lungs"></i> ออกซิเจน (O2 %)</span><div class="qty-controls"><button class="qty-btn" onclick="adj('o2', -1)">-</button><span class="val-disp" id="v-o2" style="width:70px;">98</span><button class="qty-btn" onclick="adj('o2', 1)">+</button></div></div>
-            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px; margin-bottom: 12px;">
-                <span style="font-size:1.2rem; font-weight:bold; color:white;"><i class="fa-solid fa-pump-medical"></i> ความดันโลหิต (SYS/DIA)</span>
-                <div style="display:flex; justify-content:center; align-items:center; gap:15px; margin-top:15px;"><div class="qty-controls"><button class="qty-btn" onclick="adj('sys', -5)">-</button><span class="val-disp" id="v-sys" style="width:70px;">120</span><button class="qty-btn" onclick="adj('sys', 5)">+</button></div><span style="font-size:2rem; font-weight:bold; color:#94A3B8;">/</span><div class="qty-controls"><button class="qty-btn" onclick="adj('dia', -5)">-</button><span class="val-disp" id="v-dia" style="width:70px;">80</span><button class="qty-btn" onclick="adj('dia', 5)">+</button></div></div>
-            </div>
-            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 20px;">
-                <h3 style="color:var(--warning); margin-bottom:10px;"><i class="fa-solid fa-head-side-virus"></i> อาการผิดปกติ (ติ๊กเลือก)</h3>
-                <div class="symp-title">ปวดหัว</div><div class="symp-grid" id="g-head"><button class="symp-btn active l0" onclick="setSymp('head',0)">ไม่มี</button><button class="symp-btn" onclick="setSymp('head',1)">น้อย</button><button class="symp-btn" onclick="setSymp('head',2)">ปานกลาง</button><button class="symp-btn" onclick="setSymp('head',3)">มาก</button></div>
-                <div class="symp-title">ปวดท้อง</div><div class="symp-grid" id="g-stom"><button class="symp-btn active l0" onclick="setSymp('stom',0)">ไม่มี</button><button class="symp-btn" onclick="setSymp('stom',1)">น้อย</button><button class="symp-btn" onclick="setSymp('stom',2)">ปานกลาง</button><button class="symp-btn" onclick="setSymp('stom',3)">มาก</button></div>
-                <div class="symp-title">ปวดฟัน</div><div class="symp-grid" id="g-tooth"><button class="symp-btn active l0" onclick="setSymp('tooth',0)">ไม่มี</button><button class="symp-btn" onclick="setSymp('tooth',1)">น้อย</button><button class="symp-btn" onclick="setSymp('tooth',2)">ปานกลาง</button><button class="symp-btn" onclick="setSymp('tooth',3)">มาก</button></div>
-                <div class="symp-title">ปวดเมื่อยตัว</div><div class="symp-grid" id="g-body"><button class="symp-btn active l0" onclick="setSymp('body',0)">ไม่มี</button><button class="symp-btn" onclick="setSymp('body',1)">น้อย</button><button class="symp-btn" onclick="setSymp('body',2)">ปานกลาง</button><button class="symp-btn" onclick="setSymp('body',3)">มาก</button></div>
-            </div>
-            <div style="display:flex; gap:15px; margin-top:25px;"><button class="btn-cf" style="background: rgba(255,255,255,0.1);" onclick="vibrate(); document.getElementById('health-modal').style.display='none'">ยกเลิก</button><button class="btn-cf" style="background: var(--success-grad);" onclick="submitHealth()"><i class="fa-solid fa-save"></i> บันทึกส่งให้ลูกหลาน</button></div>
-        </div>
-    </div>
-
-    <div id="pill-cam-modal" class="overlay">
-        <div class="modal glass">
-            <h2 style="color:var(--primary); margin-bottom:20px;"><i class="fa-solid fa-camera"></i> ถ่ายรูปยืนยันการกินยา</h2>
-            <p style="color:var(--sub); margin-bottom:15px;">ยกยาขึ้นมาให้เห็นชัดๆ แล้วกดปุ่มถ่ายรูป</p>
-            <video id="pill-cam-view" autoplay playsinline></video>
-            <canvas id="pill-cam-canvas" style="display:none;"></canvas>
-            <div style="display:flex; gap:15px;">
-                <button class="btn-cf" style="background:rgba(255,255,255,0.1);" onclick="closePillCam()">ยกเลิก</button>
-                <button class="btn-cf" style="background:var(--success-grad);" onclick="snapPillPhoto()"><i class="fa-solid fa-camera"></i> ถ่ายรูปและบันทึก</button>
+    <div id="incoming-call-modal" class="overlay">
+        <div class="modal">
+            <div class="call-avatar"><i class="fa-solid fa-phone-volume"></i></div>
+            <h2 style="margin-bottom: 5px;">ลูกหลานโทรมา</h2>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn-cf" style="background:var(--samsung-danger); flex:1;" onclick="rejectCall()"><i class="fa-solid fa-phone-slash"></i> วางสาย</button>
+                <button class="btn-cf" id="btn-answer-call" style="background:var(--samsung-success); flex:1;" onclick="answerCall()"><i class="fa-solid fa-phone"></i> รับสาย <span id="auto-answer-timer"></span></button>
             </div>
         </div>
     </div>
-
-    <div id="medical-id-modal" class="overlay">
-        <div class="modal glass" style="border: 2px solid var(--danger); box-shadow: 0 0 50px rgba(239,68,68,0.3);">
-            <h2 style="color:var(--danger); font-size:2rem; margin-bottom:20px;"><i class="fa-solid fa-star-of-life"></i> ข้อมูลการแพทย์ฉุกเฉิน</h2>
-            <div id="medical-content"></div>
-            <button class="btn-cf" style="background:var(--danger-grad); width:100%; margin-top:20px;" onclick="vibrate(); document.getElementById('medical-id-modal').style.display='none'">ปิดหน้าต่าง</button>
+    <div id="in-call-modal" class="overlay">
+        <div class="modal" style="border: 4px solid var(--samsung-success);">
+            <div class="call-avatar" style="animation:none; background:var(--samsung-primary);"><i class="fa-solid fa-microphone"></i></div>
+            <h2 style="margin-bottom: 5px;">กำลังคุยสาย...</h2>
+            <button class="btn-cf" style="background:var(--samsung-danger); margin-top:20px;" onclick="endCallLocal()"><i class="fa-solid fa-phone-slash"></i> วางสาย</button>
         </div>
     </div>
 
-    <div id="alert-overlay" class="overlay"><div class="modal glass"><i class="fa-solid fa-bell fa-shake" style="font-size: 90px; color: var(--warning);"></i><div style="font-size: 2.8rem; font-weight: 800; margin: 40px 0;" id="alert-msg"></div><button class="btn-ack" onclick="acknowledgeAlert()">รับทราบครับ</button></div></div>
-    <div id="youtube-overlay" class="overlay"><div class="modal glass" style="max-width: 850px;"><h2 style="color: white; margin-bottom: 25px;"><i class="fa-brands fa-youtube" style="color: #FF0000;"></i> วีดีโอจากลูกหลาน</h2><div id="youtube-container"></div><button class="btn-ack" style="background:var(--danger-grad); color:white;" onclick="vibrate(); closeYouTube()">ปิดวีดีโอ</button></div></div>
-    <div id="gallery-overlay" class="overlay"><div class="modal glass" style="max-width: 800px;"><h2 style="color: white; margin-bottom: 25px;"><i class="fa-regular fa-images" style="color: var(--primary);"></i> อัลบั้มรูปหลานๆ</h2><img id="gallery-img" src=""><div class="gallery-controls"><button class="gallery-btn" onclick="vibrate(); prevPhoto()"><i class="fa-solid fa-chevron-left"></i> ย้อนกลับ</button><button class="gallery-btn" onclick="vibrate(); nextPhoto()">ถัดไป <i class="fa-solid fa-chevron-right"></i></button></div><button class="btn-ack" style="background:var(--danger-grad); color:white;" onclick="vibrate(); document.getElementById('gallery-overlay').style.display='none'">ปิดหน้าต่าง</button></div></div>
-    <div id="game-overlay" class="overlay"><div class="modal glass" style="max-width: 650px;"><h2 style="color: white; font-size:2.5rem;"><i class="fa-solid fa-brain" style="color:var(--primary);"></i> ฝึกสมอง</h2><div id="game-board"></div><button class="btn-ack" style="background:var(--danger-grad); color:white;" onclick="vibrate(); closeGame()">เลิกเล่น</button></div></div>
-    <div id="video-overlay" class="overlay" style="padding:0;"><div id="jitsi-container" style="width:100%; height:100%;"></div></div>
+    <div id="medical-id-modal" class="overlay"><div class="modal" style="border: 2px solid var(--samsung-danger); text-align:left;"><h2 style="color:var(--samsung-danger); margin-bottom:20px; text-align:center;"><i class="fa-solid fa-user-doctor"></i> ประวัติการแพทย์</h2><div id="medical-content" style="font-size:1.1rem; line-height:1.8;"></div><button class="btn-cf" style="background:var(--samsung-danger); margin-top:20px;" onclick="document.getElementById('medical-id-modal').style.display='none'">ปิดหน้าต่าง</button></div></div>
+    <div id="pill-cam-modal" class="overlay"><div class="modal"><h2 style="color:var(--samsung-primary); margin-bottom:15px;"><i class="fa-solid fa-camera"></i> ถ่ายรูปยืนยันยา</h2><video id="pill-cam-view" autoplay playsinline style="width:100%; border-radius:15px; transform: scaleX(-1); margin-bottom:15px;"></video><canvas id="pill-cam-canvas" style="display:none;"></canvas><button class="btn-cf" style="background:var(--samsung-success);" onclick="snapPillPhoto()">ถ่ายรูปยืนยัน</button><button class="btn-cf" style="background:var(--samsung-bg); color:var(--text-title);" onclick="closePillCam()">ข้าม</button></div></div>
+    <div id="youtube-overlay" class="overlay"><div class="modal"><h2 style="color:red; margin-bottom:15px;"><i class="fa-brands fa-youtube"></i> วีดีโอจากลูกหลาน</h2><div id="youtube-container"></div><button class="btn-cf" style="background:var(--samsung-bg); color:var(--text-title);" onclick="closeYouTube()">ปิดวีดีโอ</button></div></div>
+    <div id="gallery-overlay" class="overlay"><div class="modal"><h2 style="color:var(--samsung-primary); margin-bottom:15px;"><i class="fa-regular fa-images"></i> อัลบั้มรูป</h2><img id="gallery-img" src=""><div class="gallery-controls"><button class="gallery-btn" onclick="prevPhoto()">ก่อนหน้า</button><button class="gallery-btn" onclick="nextPhoto()">ถัดไป</button></div><button class="btn-cf" style="background:var(--samsung-danger);" onclick="document.getElementById('gallery-overlay').style.display='none'">ปิด</button></div></div>
+    <div id="game-overlay" class="overlay"><div class="modal"><h2 style="color:var(--samsung-success); margin-bottom:10px;"><i class="fa-solid fa-brain"></i> ฝึกสมอง</h2><div id="game-board"></div><button class="btn-cf" style="background:var(--samsung-bg); color:var(--text-title);" onclick="closeGame()">เลิกเล่น</button></div></div>
+    <div id="alert-overlay" class="overlay"><div class="modal"><i class="fa-solid fa-bell fa-shake" style="font-size: 60px; color: var(--samsung-warning);"></i><h2 style="margin: 20px 0;" id="alert-msg"></h2><button class="btn-cf" style="background:var(--samsung-warning); color:white;" onclick="document.getElementById('alert-overlay').style.display='none'">รับทราบ</button></div></div>
 
-    <div id="screensaver"></div>
-
-    <div id="main-dashboard">
-        <div class="profile-bar glass" id="profile-display">
-            <div style="display:flex; align-items:center; gap:15px;"><i class="fa-solid fa-crown" style="color:var(--warning); font-size:1.8rem;"></i> <span id="elder-name-display" style="font-size:1.4rem;">กำลังซิงค์...</span><div id="sync-status" style="width:12px; height:12px; border-radius:50%; background:var(--success); box-shadow:0 0 10px var(--success);"></div></div>
-            <button class="btn-logout" onclick="vibrate(); logout()"><i class="fa-solid fa-power-off"></i> รีเซ็ตบัญชี</button>
+    <div id="main-dashboard" style="flex-direction:column; height:100%; display:none;">
+        <div class="top-bar">
+            <div class="user-pill"><i class="fa-solid fa-circle-user" style="color:var(--samsung-primary)"></i> <span id="elder-name-display">กำลังซิงค์...</span></div>
+            <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
         </div>
 
-        <button class="btn-medical-float" onclick="showMedicalID()"><i class="fa-solid fa-star-of-life"></i> ข้อมูลกู้ภัย</button>
+        <div class="oneui-header">
+            <div class="clock-section"><div id="clock">00:00</div><div id="date">...</div></div>
+        </div>
 
-        <div class="header">
-            <div class="clock" id="clock">00:00</div>
-            <div class="date-text" id="date-display">...</div>
-            <div class="mood-bar">
-                <button class="mood-btn" onclick="sendMood('รู้สึกมีความสุข 😄')">😄</button>
-                <button class="mood-btn" onclick="sendMood('รู้สึกเหงา 🥺')">🥺</button>
-                <button class="mood-btn" onclick="sendMood('รู้สึกป่วย/ปวดหัว 🤒')">🤒</button>
+        <div class="container">
+            <div class="card" style="border-left: 8px solid var(--samsung-warning);">
+                <div class="card-header"><i class="fa-solid fa-truck-medical"></i> กู้ภัยฉุกเฉิน (ให้หลานเมมเบอร์ไว้)</div>
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <div><h3 id="rescue-name-display" style="font-size: 1.1rem; font-weight:500; color:var(--text-sub);">กำลังโหลด...</h3><p id="rescue-phone-display" style="font-size: 1.8rem; font-weight: 800; color: var(--samsung-warning);">--</p></div>
+                </div>
+            </div>
+
+            <div class="grid-actions">
+                <button class="btn-samsung" onclick="drinkWater()"><i class="fa-solid fa-glass-water" style="color: var(--samsung-primary);"></i><span id="water-count">น้ำ (0)</span></button>
+                <button class="btn-samsung" onclick="showMedicalID()"><i class="fa-solid fa-user-doctor" style="color: var(--text-sub);"></i>ประวัติฉัน</button>
+                <button class="btn-samsung" onclick="openGame()"><i class="fa-solid fa-puzzle-piece" style="color: var(--samsung-success);"></i>ฝึกสมอง</button>
+                <button class="btn-samsung" onclick="toggleMusic()"><i class="fa-solid fa-music" style="color: #af52de;"></i>ฟังวิทยุ</button>
+                <button class="btn-samsung" onclick="openGallery()"><i class="fa-regular fa-images" style="color: var(--samsung-warning);"></i>อัลบั้มรูป</button>
+                <button class="btn-samsung" onclick="speak('ระบบพร้อมใช้งานค่ะ ขอให้คุณตาสุขภาพแข็งแรงนะคะ')"><i class="fa-solid fa-volume-high" style="color: #0ea5e9;"></i>ทดสอบเสียง</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><i class="fa-solid fa-capsules"></i> ยาที่ต้องทาน</div>
+                <div class="pill-list" id="pill-container"><p style="text-align:center; color:var(--text-sub);">ไม่มีตารางยา</p></div>
+            </div>
+
+            <div class="card" style="margin-bottom:20px;">
+                <div class="card-header"><i class="fa-regular fa-calendar-check"></i> นัดหมายหมอ</div>
+                <div class="appoint-list" id="disp-appoint"><div class="list-item" style="justify-content:center; color:var(--text-sub);">ไม่มีนัดหมาย</div></div>
             </div>
         </div>
 
-        <div class="grid-2">
-            <div class="card glass">
-                <div class="card-header"><i class="fa-solid fa-capsules" style="color:var(--warning);"></i> ยาที่ต้องทาน</div>
-                <div class="pill-list" id="pill-container"></div>
-            </div>
-            <div class="card glass">
-                <div class="card-header"><i class="fa-regular fa-calendar-check" style="color:var(--primary);"></i> นัดหมายหมอ</div>
-                <div class="appoint-list" id="disp-appoint"><div class="appoint-item">ไม่มีนัดหมาย</div></div>
-            </div>
+        <div class="bottom-nav">
+            <button class="btn-sos" onclick="triggerSOS()"><i class="fa-solid fa-hand-holding-medical"></i> ขอความช่วยเหลือด่วน</button>
         </div>
-
-        <div class="action-bar">
-            <div class="btn-action glass" style="background: rgba(16,185,129,0.2);" onclick="vibrate(); document.getElementById('health-modal').style.display='flex'"><i class="fa-solid fa-stethoscope" style="color: #10B981;"></i><span>บันทึกสุขภาพ</span></div>
-            <div class="btn-action glass" onclick="drinkWater()"><i class="fa-solid fa-glass-water" style="color: var(--primary);"></i><span id="water-count">น้ำ (0)</span></div>
-            <div class="btn-action glass btn-voice" id="btn-record" onmousedown="startRecord()" onmouseup="stopRecord()" ontouchstart="startRecord()" ontouchend="stopRecord()"><i class="fa-solid fa-microphone" style="color:#D946EF;"></i><span id="record-text">กดค้างพูด</span></div>
-            <div class="btn-action glass" onclick="vibrate(); openGallery()"><i class="fa-regular fa-images" style="color: #F59E0B;"></i><span>ดูรูปภาพ</span></div>
-            <div class="btn-action glass" onclick="toggleMusic()"><i class="fa-solid fa-music" style="color: #38BDF8;"></i><span>เปิดวิทยุ</span></div>
-            <div class="btn-action glass" onclick="vibrate(); openGame()"><i class="fa-solid fa-puzzle-piece" style="color: #F43F5E;"></i><span>ฝึกสมอง</span></div>
+    </div>
+    
+    <div id="screensaver" onclick="wakeUp()">
+        <div class="ss-content">
+            <div class="ss-clock" id="ss-clock">00:00</div>
+            <div class="ss-date" id="ss-date">...</div>
+            <div style="margin-top: 30px; font-size: 1rem; opacity: 0.7;"><i class="fa-solid fa-hand-pointer"></i> แตะหน้าจอเพื่อปลุกการใช้งาน</div>
         </div>
-        
-        <button class="btn-siren-float" onclick="playLocalSiren()"><i class="fa-solid fa-bell-on"></i></button>
-        <button class="btn-sos-float" onclick="triggerSOS()"><i class="fa-solid fa-shield-heart"></i></button>
     </div>
 
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzph3otQ0ERZxWxwb8t-GrJbDeuzz9K4zMUCl4DpacNNItpZXX5OgoRKKwqfymLLn6fAw/exec";
-        const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { keepalive: 30, reconnectPeriod: 1000 });
-        let SYSTEM_ID = localStorage.getItem('MY_SYSTEM_ID'), myTitle = "ผู้สูงอายุ", waterCount = 0;
-        let pills = [], appoints = [], photos = ["https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1000&q=80"], viewIndex = 0;
-        let isMusicPlaying = false, audio = new Audio("https://listen.radioking.com/radio/15684/stream/29964"); 
-        let sirenAudio = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"); sirenAudio.loop = true;
+        const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt', { keepalive: 30 });
+        
+        let SYSTEM_ID = localStorage.getItem('MY_SYSTEM_ID');
+        let pills = [], appoints = [], waterCount = 0;
+        let photos = ["https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1000&q=80", "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=1000&q=80"]; 
+        let viewIndex = 0;
+        let cards = ['🍎','🍎','🐶','🐶','🚗','🚗','🍉','🍉'], fCard = null, sCard = null, matches = 0, locked = false;
+        let isMusicPlaying = false; const audioPlayer = document.getElementById('audio-player');
 
-        function vibrate() { if(navigator.vibrate) navigator.vibrate(50); }
+        function showToast(msg) { let box = document.getElementById('toast-container'); let el = document.createElement('div'); el.className = 'toast'; el.innerText = msg; box.appendChild(el); setTimeout(() => { el.remove(); }, 3000); }
+        function saveToCloud(payload) { const formData = new URLSearchParams(); formData.append('data', JSON.stringify(payload)); fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: formData }); }
 
-        // 🔴 ระบบ Offline Queue Sync (เน็ตหลุดไม่เป็นไร)
-        let offlineQueue = JSON.parse(localStorage.getItem('offlineQueue') || '[]');
-        window.addEventListener('online', () => {
-            document.getElementById('sync-status').style.background = "var(--success)";
-            document.getElementById('sync-status').style.boxShadow = "0 0 10px var(--success)";
-            if(offlineQueue.length > 0) {
-                showToast(`กำลังซิงค์ข้อมูลค้าง...`, "info");
-                offlineQueue.forEach(p => { const fd = new URLSearchParams(); fd.append('data', JSON.stringify(p)); fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: fd }); });
-                offlineQueue = []; localStorage.setItem('offlineQueue', '[]');
+        window.onload = () => { 
+            if (SYSTEM_ID) {
+                document.getElementById('auth-screen').style.display = 'none';
+                document.getElementById('main-dashboard').style.display = 'flex';
+                loadLocalCache(); setupMQTT(); syncFromCloud(); 
+            } else {
+                document.getElementById('auth-screen').style.display = 'flex';
             }
-        });
-        window.addEventListener('offline', () => { 
-            document.getElementById('sync-status').style.background = "var(--danger)";
-            document.getElementById('sync-status').style.boxShadow = "0 0 10px var(--danger)";
-            showToast("ออฟไลน์: บันทึกข้อมูลลงเครื่องชั่วคราว", "offline"); 
-        });
+        };
 
-        function saveToCloud(payload) { 
-            if(!navigator.onLine) { offlineQueue.push(payload); localStorage.setItem('offlineQueue', JSON.stringify(offlineQueue)); return; }
-            const formData = new URLSearchParams(); formData.append('data', JSON.stringify(payload)); fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: formData }); 
-        }
-
-        // 🔴 โชว์ Medical ID
-        function showMedicalID() {
-            vibrate(); const p = JSON.parse(localStorage.getItem('elderProfile') || '{}');
-            document.getElementById('medical-content').innerHTML = `
-                <div class="med-id-row"><span>ชื่อ:</span> ${p.title||''} ${p.name||'ไม่ระบุ'} (อายุ ${p.age||'-'} ปี)</div>
-                <div class="med-id-row"><span>กรุ๊ปเลือด:</span> <b style="color:white; font-size:1.5rem;">${p.blood||'-'}</b></div>
-                <div class="med-id-row"><span>โรคประจำตัว:</span> ${p.disease||'ไม่มี'}</div>
-                <div class="med-id-row" style="background:rgba(239,68,68,0.2); border:1px solid var(--danger);"><span>แพ้ยา/อาหาร:</span> <b style="color:white;">${p.allergy||'ไม่มี'}</b></div>
-                <div class="med-id-row"><span>เบอร์ฉุกเฉินลูกหลาน:</span> ${p.phone||'-'}</div>
-            `;
-            document.getElementById('medical-id-modal').style.display = 'flex';
-        }
-
-        let hState = { s: 8, u: 3, f: 1, hr: 80, o2: 98, sys: 120, dia: 80, symp: { head: 0, stom: 0, tooth: 0, body: 0 } };
-        function adj(key, val) { vibrate(); hState[key] += val; if(hState[key] < 0) hState[key] = 0; document.getElementById('v-'+key).innerText = hState[key]; }
-        function setSymp(type, level) { vibrate(); hState.symp[type] = level; const btns = document.getElementById('g-'+type).children; for(let i=0; i<btns.length; i++) { btns[i].className = `symp-btn ${i===level ? 'active l'+i : ''}`; } }
-        function submitHealth() {
-            vibrate(); let res = { s: hState.s, u: hState.u, f: hState.f, hr: hState.hr, o2: hState.o2, bp: `${hState.sys}/${hState.dia}`, symp: hState.symp, time: new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) };
-            client.publish(`familycare/${SYSTEM_ID}/status/health`, JSON.stringify(res), {qos:1}); saveToCloud({ action: "updateHealth", system_id: SYSTEM_ID, health: JSON.stringify(res) });
-            document.getElementById('health-modal').style.display = 'none'; showToast("บันทึกสุขภาพเรียบร้อย!", "success");
-        }
-
-        function showToast(msg, type='info') { let box = document.getElementById('toast-container'); let el = document.createElement('div'); el.className = `toast ${type}`; el.innerHTML = `<i class="fa-solid ${type==='success'?'fa-check-circle':type==='error'?'fa-circle-exclamation':'fa-bell'}" style="font-size:1.5rem;"></i> <span>${msg}</span>`; box.appendChild(el); setTimeout(() => { el.style.animation = 'slideUpFade 0.3s forwards'; setTimeout(()=>el.remove(),300); }, 3000); }
-        function customConfirm(msg, callback) { vibrate(); document.getElementById('confirm-msg').innerText = msg; const overlay = document.getElementById('confirm-overlay'); overlay.classList.add('show'); window.confirmCallback = () => { vibrate(); overlay.classList.remove('show'); callback(); }; window.cancelCallback = () => { vibrate(); overlay.classList.remove('show'); }; }
-
-        window.onload = () => { if(!navigator.onLine) { document.getElementById('sync-status').style.background = "var(--danger)"; document.getElementById('sync-status').style.boxShadow = "0 0 10px var(--danger)";} if (SYSTEM_ID) { document.getElementById('auth-screen').style.display = 'none'; syncFromCloud(); initDeviceFeatures(); } };
-        function toggleAuth() { vibrate(); const l = document.getElementById('login-form'), r = document.getElementById('reg-form'); l.style.display = l.style.display==='none'?'block':'none'; r.style.display = r.style.display==='none'?'block':'none'; }
-
+        // 🟢 Login Fix
         async function login() {
-            vibrate(); const id = document.getElementById('login-id').value, pass = document.getElementById('login-pass').value;
-            if(!id || !pass) return showToast('กรอกให้ครบ', 'error');
-            try { const res = await fetch(`${GAS_URL}?action=login&id=${id}&pass=${pass}`); const data = await res.json(); if(data.status === 'success') { localStorage.setItem('MY_SYSTEM_ID', id); SYSTEM_ID = id; location.reload(); } else showToast("รหัสไม่ถูกต้อง", 'error'); } catch(e) { showToast('ขัดข้อง', 'error'); }
+            const id = document.getElementById('login-id').value, pass = document.getElementById('login-pass').value;
+            if(!id || !pass) return showToast('กรุณากรอกรหัสและรหัสผ่านให้ครบ');
+            showToast('กำลังตรวจสอบข้อมูล...');
+            try { 
+                const res = await fetch(`${GAS_URL}?action=login&id=${id}&pass=${pass}`); 
+                const text = await res.text();
+                if(text.includes("<!DOCTYPE html>")) return showToast('ระบบขัดข้อง โปรดลองใหม่');
+                const data = JSON.parse(text); 
+                if(data.status === 'success') { 
+                    SYSTEM_ID = id; localStorage.setItem('MY_SYSTEM_ID', id); 
+                    showToast('เข้าสู่ระบบสำเร็จ!'); setTimeout(() => { location.reload(); }, 1000);
+                } else showToast("รหัสไม่ถูกต้อง"); 
+            } catch(e) { showToast('การเชื่อมต่อขัดข้อง'); }
         }
-        function register() {
-            vibrate(); const title = document.getElementById('reg-title').value, name = document.getElementById('reg-name').value, pass = document.getElementById('reg-pass').value;
-            if(!name || !pass) return showToast('กรอกให้ครบ', 'error');
-            const newId = "ELDER_" + Math.floor(Math.random() * 900000 + 100000);
-            saveToCloud({ action: "register", system_id: newId, title: title, name: name, password: pass });
-            setTimeout(() => { localStorage.setItem('MY_SYSTEM_ID', newId); SYSTEM_ID = newId; document.getElementById('auth-screen').style.display = 'none'; document.getElementById('display-id').innerText = newId; new QRCode(document.getElementById("qrcode"), { text: newId, width: 220, height: 220, colorDark: "#0EA5E9" }); document.getElementById('qr-screen').style.display = 'flex'; }, 1000);
+
+        // 🟢 Logout
+        function logout() { 
+            if(confirm("แน่ใจหรือไม่ที่จะออกจากระบบ?")) { localStorage.removeItem('MY_SYSTEM_ID'); location.reload(); }
         }
-        function enterDashboard() { vibrate(); document.getElementById('qr-screen').style.display = 'none'; location.reload(); }
+
+        function loadLocalCache() {
+            let p = JSON.parse(localStorage.getItem('elderProfile_' + SYSTEM_ID) || '{}');
+            document.getElementById('elder-name-display').innerText = p.name || "คุณตา/คุณยาย";
+            document.getElementById('rescue-name-display').innerText = p.rescue_name || "ยังไม่มีข้อมูล"; document.getElementById('rescue-phone-display').innerText = p.rescue_phone || "ให้หลานตั้งค่า";
+            waterCount = parseInt(localStorage.getItem('waterCount_' + SYSTEM_ID) || "0"); document.getElementById('water-count').innerText = `น้ำ (${waterCount})`;
+            let localPills = localStorage.getItem('pills_' + SYSTEM_ID); if(localPills) { pills = JSON.parse(localPills); renderPills(); }
+            let localAppoints = localStorage.getItem('appoints_' + SYSTEM_ID); if(localAppoints) { appoints = JSON.parse(localAppoints); renderAppoints(); }
+        }
 
         async function syncFromCloud() {
             try {
                 const res = await fetch(`${GAS_URL}?action=read&id=${SYSTEM_ID}`); const data = await res.json();
-                if (data.status === "Suspended") { document.getElementById('main-dashboard').style.display = 'none'; document.getElementById('paywall-screen').style.display = 'flex'; document.getElementById('paywall-id').innerText = SYSTEM_ID; return; }
-                document.getElementById('paywall-screen').style.display = 'none'; document.getElementById('main-dashboard').style.display = 'flex';
-                localStorage.setItem('elderProfile', JSON.stringify(data)); myTitle = data.title || "ผู้สูงอายุ"; document.getElementById('elder-name-display').innerText = `${myTitle} ${data.name}`;
-                if(data.pills && data.pills !== "[]") { pills = JSON.parse(data.pills); renderPills(); } 
-                if(data.appoint && data.appoint !== "[]") { appoints = JSON.parse(data.appoint); renderAppoints(); }
-                if(data.water) { waterCount = parseInt(data.water); document.getElementById('water-count').innerText = `น้ำ (${waterCount})`; }
-            } catch(e) { document.getElementById('main-dashboard').style.display = 'flex'; }
+                localStorage.setItem('elderProfile_' + SYSTEM_ID, JSON.stringify(data)); 
+                document.getElementById('elder-name-display').innerText = data.name || "คุณตา/คุณยาย";
+                document.getElementById('rescue-name-display').innerText = data.rescue_name || "ยังไม่มีข้อมูล"; document.getElementById('rescue-phone-display').innerText = data.rescue_phone || "ให้หลานตั้งค่า";
+                if(data.water) { waterCount = parseInt(data.water); localStorage.setItem('waterCount_' + SYSTEM_ID, waterCount); document.getElementById('water-count').innerText = `น้ำ (${waterCount})`; }
+                if(data.pills && data.pills !== "[]") { pills = JSON.parse(data.pills); localStorage.setItem('pills_' + SYSTEM_ID, data.pills); renderPills(); } 
+                if(data.appoint && data.appoint !== "[]") { appoints = JSON.parse(data.appoint); localStorage.setItem('appoints_' + SYSTEM_ID, data.appoint); renderAppoints(); } 
+            } catch(e) {}
         }
 
-        // 🔴 Digital Photo Frame (Night Mode)
-        let inactivityTimer = 0;
-        ['click', 'touchstart', 'mousemove', 'scroll', 'keydown'].forEach(evt => window.addEventListener(evt, () => inactivityTimer = 0));
-        setInterval(() => {
-            inactivityTimer++;
-            // เข้าโหมด Screensaver (Photo Frame) ถ้าไม่ขยับ 1 นาที
-            if(inactivityTimer > 60) {
-                document.body.classList.add('night-mode');
-                if(photos.length > 0) { document.getElementById('screensaver').style.backgroundImage = `url('${photos[photoIndex]}')`; photoIndex = (photoIndex + 1) % photos.length; }
-            } else {
-                document.body.classList.remove('night-mode');
-            }
-            // 🔴 ตรวจจับล้ม (12 ชม.)
-            if(inactivityTimer > 12 * 60 * 60) { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({error: "INACTIVITY"}), {qos:1}); inactivityTimer = 0; }
-        }, 1000);
-
-        let findInterval;
-        function triggerFindMyDevice() { showToast("ลูกหลานกำลังค้นหาเครื่อง!", "error"); sirenAudio.play(); document.body.classList.add('flashing'); findInterval = setTimeout(() => { sirenAudio.pause(); document.body.classList.remove('flashing'); }, 10000); }
-
-        function initDeviceFeatures() {
-            if (navigator.geolocation) { setInterval(() => { navigator.geolocation.getCurrentPosition(p => { if(p.coords.accuracy > 150) return; client.publish(`familycare/${SYSTEM_ID}/status/location`, JSON.stringify({ lat: p.coords.latitude, lng: p.coords.longitude }), {qos:0}); }, ()=>{}, {enableHighAccuracy: true}); }, 120000); }
-            if(!client.connected) client.reconnect(); client.subscribe(`familycare/${SYSTEM_ID}/command/#`); client.subscribe(`familycare/broadcast`);
+        function setupMQTT() {
+            if(!client.connected) client.reconnect();
+            client.subscribe(`familycare/${SYSTEM_ID}/command/#`);
             
+            // 🟢 Heartbeat Sender
+            setInterval(() => {
+                if(client.connected) client.publish(`familycare/${SYSTEM_ID}/status/heartbeat`, "1", {qos:0});
+            }, 5000);
+
             client.on('message', (topic, message) => {
                 const payload = message.toString(); const action = topic.split('/').pop();
-                if(topic === 'familycare/broadcast') { document.getElementById('alert-msg').innerText = payload; document.getElementById('alert-overlay').style.display = 'flex'; speak("มีประกาศครับ"); return; }
-                if(!topic.startsWith(`familycare/${SYSTEM_ID}`)) return;
                 
-                if(action === 'status_update' || action === 'profile' || action === 'pills_update' || action === 'appoint' || action === 'settings') { syncFromCloud(); }
-                else if(action === 'photo') { photos.push(payload); showToast("ได้รับรูปภาพใหม่", "success"); } 
-                else if(action === 'alert') { document.getElementById('alert-msg').innerText = payload; document.getElementById('alert-overlay').style.display = 'flex'; speak(payload); }
-                else if(action === 'youtube') { let videoId = payload.includes("v=") ? payload.split("v=")[1].substring(0, 11) : payload.includes("youtu.be/") ? payload.split("youtu.be/")[1].substring(0, 11) : null; if(videoId) { document.getElementById('youtube-container').innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`; document.getElementById('youtube-overlay').style.display = 'flex'; speak("เปิดวีดีโอครับ"); } }
-                else if(action === 'siren') { if(payload === 'start') { sirenAudio.play(); showToast("ลูกหลานสั่งเปิดไซเรน!", "error"); } else { sirenAudio.pause(); } }
-                else if(action === 'find_device') { triggerFindMyDevice(); } 
-                else if(action === 'video') { 
-                    if(payload.startsWith('start_')) { let roomPass = payload.split('_')[1]; document.getElementById('video-overlay').style.display = 'flex'; speak("กำลังเปิดกล้องฉุกเฉิน"); jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", { roomName: "Room_" + SYSTEM_ID + "_" + roomPass, parentNode: document.getElementById('jitsi-container'), width: "100%", height: "100%" }); } 
-                    else { if(jitsiApi) jitsiApi.dispose(); document.getElementById('video-overlay').style.display = 'none'; } 
+                if(action === 'profile_updated') { 
+                    try {
+                        const data = JSON.parse(payload); document.getElementById('rescue-name-display').innerText = data.rescue_name || "ยังไม่มีข้อมูล"; document.getElementById('rescue-phone-display').innerText = data.rescue_phone || "--";
+                        let p = JSON.parse(localStorage.getItem('elderProfile_' + SYSTEM_ID) || '{}'); p.age = data.age; p.blood = data.blood; p.disease = data.disease; p.allergy = data.allergy; p.rescue_name = data.rescue_name; p.rescue_phone = data.rescue_phone;
+                        localStorage.setItem('elderProfile_' + SYSTEM_ID, JSON.stringify(p)); showToast("อัปเดตประวัติจากลูกหลานแล้ว!");
+                    } catch(e) {}
                 }
-                else if(action === 'kill_switch') { document.body.innerHTML = "<h1 style='color:red; text-align:center; margin-top:20%; font-size:3rem;'>ล้างเครื่องโดยแอดมิน</h1>"; localStorage.clear(); setTimeout(()=>location.reload(), 2000); }
+                else if(action === 'pills_update') { pills = JSON.parse(payload); localStorage.setItem('pills_' + SYSTEM_ID, payload); renderPills(); }
+                else if(action === 'appoint') { appoints = JSON.parse(payload); localStorage.setItem('appoints_' + SYSTEM_ID, payload); renderAppoints(); }
+                else if(action === 'photo') { photos.push(payload); showToast("หลานส่งรูปมาให้ดูใหม่!"); speak("ลูกหลานส่งรูปภาพมาให้ดูใหม่ค่ะ"); }
+                else if(action === 'youtube') { let videoId = payload.includes("v=") ? payload.split("v=")[1].substring(0, 11) : payload.includes("youtu.be/") ? payload.split("youtu.be/")[1].substring(0, 11) : null; if(videoId) { document.getElementById('youtube-container').innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allowfullscreen></iframe>`; document.getElementById('youtube-overlay').style.display = 'flex'; wakeUp(); speak("เปิดยูทูปให้แล้วค่ะ"); } }
+                else if(action === 'find_device') { document.body.classList.add('flashing'); speak("ลูกหลานกำลังค้นหาเครื่องค่ะ"); setTimeout(() => { document.body.classList.remove('flashing'); }, 5000); }
+                else if(topic.includes('webrtc')) handleWebRTCSignal(action, payload);
             });
         }
 
-        function sendMood(mood) { vibrate(); client.publish(`familycare/${SYSTEM_ID}/status/mood`, mood, {qos:0}); saveToCloud({ action: "log", system_id: SYSTEM_ID, msg: `ส่งอารมณ์: ${mood}` }); showToast("ส่งความรู้สึกแล้ว", "success"); }
-        function renderAppoints() { const c = document.getElementById('disp-appoint'); if(appoints.length === 0) { c.innerHTML = '<div class="appoint-item">ไม่มีนัดหมาย</div>'; return; } c.innerHTML = appoints.map(a => `<div class="appoint-item" style="display:flex; justify-content:space-between;"><div><span style="color:var(--primary);">${a.date}</span><br>${a.text}</div></div>`).join(''); }
-        function renderPills() { 
-            const c = document.getElementById('pill-container'); if(pills.length === 0) { c.innerHTML = '<div style="color:var(--sub); text-align:center; padding: 20px; font-size:1.2rem;">ไม่มีตารางยา</div>'; return; } 
-            c.innerHTML = pills.map((p, i) => { let times = []; if(p.m) times.push('<span class="pill-badge">เช้า</span>'); if(p.n) times.push('<span class="pill-badge">กลางวัน</span>'); if(p.e) times.push('<span class="pill-badge">เย็น</span>'); if(p.b) times.push('<span class="pill-badge">ก่อนนอน</span>'); 
-            return `<div class="pill-item"><div style="flex:1;"><div class="pill-name" style="color: ${p.taken ? '#94A3B8' : 'white'}">${p.name}</div><div class="pill-times">${times.join('')}</div></div><button class="btn-take-pill ${p.taken ? 'taken' : ''}" onclick="openPillCamera('${p.name}', ${i})">${p.taken ? '<i class="fa-solid fa-check"></i> ทานแล้ว' : 'กินยา'}</button></div>`; }).join(''); 
-        }
-        
-        // 🔴 Photo Verification ถ่ายรูปยา
-        let currentPillIdx = -1, currentPillName = ""; let camStream;
-        function openPillCamera(name, i) {
-            vibrate(); currentPillIdx = i; currentPillName = name;
-            document.getElementById('pill-cam-modal').style.display = 'flex';
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }).then(stream => {
-                camStream = stream; document.getElementById('pill-cam-view').srcObject = stream;
-            }).catch(e => { showToast("เปิดกล้องไม่ได้ จะบันทึกแบบไม่ใช้รูปแทน", "error"); confirmPillTake(); closePillCam(); });
-        }
-        function closePillCam() { document.getElementById('pill-cam-modal').style.display = 'none'; if(camStream) camStream.getTracks().forEach(t=>t.stop()); }
-        function snapPillPhoto() {
-            vibrate(); const video = document.getElementById('pill-cam-view'); const canvas = document.getElementById('pill-cam-canvas');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const base64 = canvas.toDataURL('image/jpeg', 0.5); // บีบอัดส่งให้ลูกหลานดู
-            client.publish(`familycare/${SYSTEM_ID}/status/pill_photo`, JSON.stringify({name: currentPillName, img: base64}), {qos:1});
-            closePillCam(); confirmPillTake();
-        }
-        function confirmPillTake() {
-            pills[currentPillIdx].taken = true; renderPills(); speak(`บันทึกการกินยาแล้ว`); 
-            client.publish(`familycare/${SYSTEM_ID}/status/pill_taken`, currentPillName, {qos:1}); 
-            saveToCloud({ action: "takePill", system_id: SYSTEM_ID, pillName: currentPillName }); // 🔴 ให้ Server หักสต๊อกเอง!
-            showToast(`ทานยาแล้ว`, "success");
+        // 🟢 Text-To-Speech (พูดภาษาไทย)
+        function speak(txt) { 
+            if('speechSynthesis' in window) { 
+                window.speechSynthesis.cancel(); 
+                const msg = new SpeechSynthesisUtterance(txt); 
+                msg.lang = 'th-TH'; msg.rate = 0.9; 
+                window.speechSynthesis.speak(msg); 
+            } 
         }
 
-        function drinkWater() { vibrate(); waterCount++; document.getElementById('water-count').innerText = `น้ำ (${waterCount})`; speak("เก่งมาก"); client.publish(`familycare/${SYSTEM_ID}/status/water`, waterCount.toString(), {qos:0}); saveToCloud({ action: "updateWater", system_id: SYSTEM_ID, water: waterCount }); showToast("บันทึกดื่มน้ำ", "success");}
-        
-        let mediaRecorder; let audioChunks = []; let isRecording = false;
-        function startRecord() { vibrate(); if(isRecording) return; navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => { let mime = 'audio/webm'; if (!MediaRecorder.isTypeSupported(mime)) mime = 'audio/mp4'; mediaRecorder = new MediaRecorder(stream, { mimeType: mime }); mediaRecorder.start(); isRecording = true; audioChunks = []; document.getElementById('btn-record').classList.add('recording'); document.getElementById('record-text').innerText = "กำลังอัด..."; mediaRecorder.addEventListener("dataavailable", e => { audioChunks.push(e.data); }); mediaRecorder.addEventListener("stop", () => { const reader = new FileReader(); reader.readAsDataURL(new Blob(audioChunks, { type: mime })); reader.onloadend = () => { client.publish(`familycare/${SYSTEM_ID}/status/voice`, reader.result, {qos:1}); showToast("ส่งข้อความเสียงแล้ว", "success"); }; stream.getTracks().forEach(track => track.stop()); }); }).catch(e => showToast("เปิดไมค์ไม่ได้", "error")); }
-        function stopRecord() { if(mediaRecorder && isRecording) { mediaRecorder.stop(); isRecording = false; document.getElementById('btn-record').classList.remove('recording'); document.getElementById('record-text').innerText = "กดค้างพูด"; } }
+        // 🟢 ตรวจจับเวลากินยาแล้วพูดเตือน
+        setInterval(() => {
+            const now = new Date();
+            const h = now.getHours(); const m = now.getMinutes(); const s = now.getSeconds();
+            if(s === 0 && pills.length > 0) {
+                let isMorning = (h === 8 && m === 0); let isNoon = (h === 12 && m === 0); let isEvening = (h === 17 && m === 0); let isBed = (h === 20 && m === 0);
+                if(isMorning || isNoon || isEvening || isBed) {
+                    let pName = document.getElementById('elder-name-display').innerText;
+                    speak(`${pName} คะ ถึงเวลาทานยาแล้วค่ะ อย่าลืมทานยานะคะ`);
+                    document.body.classList.add('flashing'); setTimeout(() => { document.body.classList.remove('flashing'); }, 3000);
+                }
+            }
+        }, 1000);
 
-        function logout() { customConfirm("ต้องการรีเซ็ตและลบข้อมูลเครื่องนี้?", () => { client.publish(`familycare/${SYSTEM_ID}/status/logout`, "true", { qos: 1 }); setTimeout(() => { localStorage.clear(); location.reload(); }, 1500); }); }
-        let isLocalSiren = false; function playLocalSiren() { vibrate(); if(isLocalSiren) { sirenAudio.pause(); sirenAudio.currentTime=0; isLocalSiren=false; showToast("ปิดไซเรน", "info"); } else { sirenAudio.play(); isLocalSiren=true; client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({error: "SIREN_LOCAL"}), {qos:1}); } }
+        // ของเก่า: ยา, หมอ, วิทยุ, เกม, แกลเลอรี่ อยู่ครบ
+        function renderPills() { const c = document.getElementById('pill-container'); if(pills.length === 0) return c.innerHTML = '<p style="text-align:center; color:var(--text-sub);">ไม่มีตารางยา</p>'; c.innerHTML = pills.map((p, i) => `<div class="list-item"><div><b style="font-size:1.1rem; color:${p.taken?'var(--text-sub)':'var(--text-title)'};">${p.name}</b><br><span style="font-size:0.8rem; color:var(--text-sub);">เหลือ ${p.qty} เม็ด</span></div><button class="btn-take-pill ${p.taken ? 'taken' : ''}" onclick="confirmPillTake(${i})">${p.taken ? '✔️ ทานแล้ว' : 'กินยา'}</button></div>`).join(''); }
+        function confirmPillTake(idx) { pills[idx].taken = true; if(pills[idx].qty > 0) pills[idx].qty--; localStorage.setItem('pills_' + SYSTEM_ID, JSON.stringify(pills)); renderPills(); showToast(`เก่งมากค่ะ ทานยา ${pills[idx].name} แล้ว`); speak(`เก่งมากค่ะ ทานยา ${pills[idx].name} เรียบร้อยแล้ว`); client.publish(`familycare/${SYSTEM_ID}/status/pill_taken`, pills[idx].name, {qos:0}); client.publish(`familycare/${SYSTEM_ID}/command/pills_update`, JSON.stringify(pills), { retain: true, qos:0 }); saveToCloud({ action: "updatePills", system_id: SYSTEM_ID, pills: JSON.stringify(pills) }); }
+        function renderAppoints() { const c = document.getElementById('disp-appoint'); if(appoints.length === 0) { c.innerHTML = '<div class="list-item" style="justify-content:center; color:var(--text-sub);">ไม่มีนัดหมาย</div>'; return; } c.innerHTML = appoints.map(a => `<div class="list-item"><div style="width:100%;"><span style="color:var(--samsung-primary); font-weight:bold;">${a.date} | ${a.time}</span><br><b style="font-size:1.1rem;">${a.text}</b></div></div>`).join(''); }
+
+        function drinkWater() { waterCount++; localStorage.setItem('waterCount_' + SYSTEM_ID, waterCount); document.getElementById('water-count').innerText = `น้ำ (${waterCount})`; client.publish(`familycare/${SYSTEM_ID}/status/water`, waterCount.toString(), {qos:0}); saveToCloud({ action: "updateWater", system_id: SYSTEM_ID, water: waterCount }); showToast("บันทึกดื่มน้ำ"); speak(`ดื่มน้ำแก้วที่ ${waterCount} แล้ว ชื่นใจจังเลยค่ะ`); }
+        function triggerSOS() { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({lat: 0, lng: 0})); document.body.classList.add('flashing'); setTimeout(() => { document.body.classList.remove('flashing'); }, 5000); showToast("🚨 ส่งฉุกเฉินแล้ว"); speak("กำลังส่งสัญญาณฉุกเฉินหาลูกหลานค่ะ กรุณารอสักครู่"); }
+        function showMedicalID() { const p = JSON.parse(localStorage.getItem('elderProfile_' + SYSTEM_ID) || '{}'); document.getElementById('medical-content').innerHTML = `<div style="background:var(--samsung-bg); padding:15px; border-radius:15px; margin-bottom:10px;"><b>อายุ:</b> ${p.age||'-'} ปี</div><div style="background:var(--samsung-bg); padding:15px; border-radius:15px; margin-bottom:10px;"><b>กรุ๊ปเลือด:</b> <span style="font-size:1.3rem; color:var(--samsung-danger); font-weight:bold;">${p.blood||'-'}</span></div><div style="background:var(--samsung-bg); padding:15px; border-radius:15px; margin-bottom:10px;"><b>โรคประจำตัว:</b> ${p.disease||'ไม่มี'}</div><div style="background:rgba(240,78,70,0.1); padding:15px; border-radius:15px; color:var(--samsung-danger);"><b>แพ้ยา/อาหาร:</b> <b>${p.allergy||'ไม่มี'}</b></div>`; document.getElementById('medical-id-modal').style.display = 'flex'; }
+        
+        function toggleMusic() { if(isMusicPlaying) { audioPlayer.pause(); showToast("ปิดวิทยุ"); } else { audioPlayer.play(); showToast("เปิดสถานีวิทยุ");} isMusicPlaying = !isMusicPlaying; }
         function openGallery() { document.getElementById('gallery-overlay').style.display = 'flex'; viewIndex = photos.length - 1; updateGallery(); } function updateGallery() { document.getElementById('gallery-img').src = photos[viewIndex]; } function prevPhoto() { viewIndex = (viewIndex - 1 + photos.length) % photos.length; updateGallery(); } function nextPhoto() { viewIndex = (viewIndex + 1) % photos.length; updateGallery(); }
-        setInterval(() => { const now = new Date(); document.getElementById('clock').innerText = now.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}); document.getElementById('date-display').innerText = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }, 1000);
-        function speak(txt) { if('speechSynthesis' in window) { window.speechSynthesis.cancel(); const msg = new SpeechSynthesisUtterance(txt); msg.lang = 'th-TH'; window.speechSynthesis.speak(msg); } }
-        function orderFood() { vibrate(); speak("เปิดเมนูสั่งอาหาร"); window.open("https://food.grab.com/th/th/", "_blank"); }
-        function toggleMusic() { vibrate(); if(isMusicPlaying) { audio.pause(); showToast("ปิดวิทยุ", "info"); } else { audio.play(); showToast("เปิดสถานีวิทยุออนไลน์", "success");} isMusicPlaying = !isMusicPlaying; }
-        function acknowledgeAlert() { vibrate(); document.getElementById('alert-overlay').style.display = 'none'; client.publish(`familycare/${SYSTEM_ID}/status/read_receipt`, `รับทราบแล้ว`, {qos:1}); }
         function closeYouTube() { document.getElementById('youtube-container').innerHTML = ""; document.getElementById('youtube-overlay').style.display = 'none'; }
-        function triggerSOS() { vibrate(); speak("ส่งสัญญาณฉุกเฉิน"); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition( (pos) => { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }), {qos:1}); }); } else { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({error: "NO_GPS"}), {qos:1}); } showToast("ส่งฉุกเฉินแล้ว", "error"); }
-        let cards = ['🍎','🍎','🐶','🐶','🚗','🚗','🍉','🍉'], fCard = null, sCard = null, matches = 0, locked = false; function openGame() { document.getElementById('game-overlay').style.display = 'flex'; initGame(); } function closeGame() { document.getElementById('game-overlay').style.display = 'none'; } function initGame() { const b = document.getElementById('game-board'); b.innerHTML = ''; cards.sort(() => 0.5 - Math.random()); matches = 0; [fCard, sCard, locked] = [null, null, false]; cards.forEach(c => { let btn = document.createElement('button'); btn.className = 'memory-card glass'; btn.dataset.val = c; btn.onclick = () => flipCard(btn); b.appendChild(btn); }); } function flipCard(card) { vibrate(); if(locked || card === fCard || card.classList.contains('matched')) return; card.classList.add('flipped'); card.innerText = card.dataset.val; if(!fCard) { fCard = card; return; } sCard = card; locked = true; if(fCard.dataset.val === sCard.dataset.val) { fCard.classList.add('matched'); sCard.classList.add('matched'); matches++; if(matches === 4) setTimeout(() => { showToast("ชนะแล้ว! 🎉", "success"); initGame(); }, 500); [fCard, sCard, locked] = [null, null, false]; } else { setTimeout(() => { fCard.classList.remove('flipped'); fCard.innerText = ''; sCard.classList.remove('flipped'); sCard.innerText = ''; [fCard, sCard, locked] = [null, null, false]; }, 1000); } }
+        function openGame() { document.getElementById('game-overlay').style.display = 'flex'; initGame(); } function closeGame() { document.getElementById('game-overlay').style.display = 'none'; } function initGame() { const b = document.getElementById('game-board'); b.innerHTML = ''; cards.sort(() => 0.5 - Math.random()); matches = 0; [fCard, sCard, locked] = [null, null, false]; cards.forEach(c => { let btn = document.createElement('button'); btn.className = 'memory-card'; btn.dataset.val = c; btn.onclick = () => flipCard(btn); b.appendChild(btn); }); } function flipCard(card) { if(locked || card === fCard || card.classList.contains('matched')) return; card.classList.add('flipped'); card.innerText = card.dataset.val; if(!fCard) { fCard = card; return; } sCard = card; locked = true; if(fCard.dataset.val === sCard.dataset.val) { fCard.classList.add('matched'); sCard.classList.add('matched'); matches++; if(matches === 4) setTimeout(() => { showToast("ชนะแล้ว! 🎉"); initGame(); }, 500); [fCard, sCard, locked] = [null, null, false]; } else { setTimeout(() => { fCard.classList.remove('flipped'); fCard.innerText = ''; sCard.classList.remove('flipped'); sCard.innerText = ''; [fCard, sCard, locked] = [null, null, false]; }, 1000); } }
+
+        // 🟢 นาฬิกา
+        setInterval(() => { 
+            const n = new Date(); const timeStr = n.toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}); const dateStr = n.toLocaleDateString('th-TH', { weekday: 'long', month: 'long', day: 'numeric' });
+            document.getElementById('clock').innerText = timeStr; document.getElementById('date').innerText = dateStr; 
+            document.getElementById('ss-clock').innerText = timeStr; document.getElementById('ss-date').innerText = dateStr; 
+        }, 1000);
+
+        // 🟢 Smart Display Mode & Inactivity Alert (6 Hrs)
+        let inactivityTimer = 0;
+        ['click', 'touchstart', 'scroll'].forEach(evt => window.addEventListener(evt, () => { inactivityTimer = 0; document.body.classList.remove('night-mode'); }));
+        function wakeUp() { inactivityTimer = 0; document.body.classList.remove('night-mode'); }
+
+        setInterval(() => { 
+            inactivityTimer++; 
+            if(inactivityTimer > 60) { 
+                document.body.classList.add('night-mode'); 
+                if(photos.length > 0 && inactivityTimer % 10 === 0) { document.getElementById('screensaver').style.backgroundImage = `url('${photos[viewIndex]}')`; viewIndex = (viewIndex + 1) % photos.length; } 
+            } 
+            if(inactivityTimer > 21600) { client.publish(`familycare/${SYSTEM_ID}/status/sos`, JSON.stringify({error: "INACTIVITY"}), {qos:1}); inactivityTimer = 0; } 
+        }, 1000);
+
+        // 🟢 WebRTC (Auto-Answer)
+        let peerConnection; let localStream; let incomingOffer; let autoAnswerTimer; const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        async function handleWebRTCSignal(type, payload) { 
+            if(type === 'offer') { 
+                incomingOffer = JSON.parse(payload); document.getElementById('ringtone').play(); document.getElementById('incoming-call-modal').style.display = 'flex'; wakeUp();
+                let countdown = 10; document.getElementById('auto-answer-timer').innerText = `(${countdown})`;
+                autoAnswerTimer = setInterval(() => { countdown--; document.getElementById('auto-answer-timer').innerText = `(${countdown})`; if(countdown <= 0) { clearInterval(autoAnswerTimer); answerCall(); speak("เปิดไมค์รับสายอัตโนมัติแล้วค่ะ"); } }, 1000);
+            } 
+            else if(type === 'candidate') { const candidate = JSON.parse(payload); if (peerConnection && peerConnection.remoteDescription) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); } 
+            else if(type === 'hangup') { endCallLocal(); showToast("อีกฝ่ายวางสายแล้ว"); } 
+        }
+        async function answerCall() { 
+            if(autoAnswerTimer) clearInterval(autoAnswerTimer); document.getElementById('ringtone').pause(); document.getElementById('incoming-call-modal').style.display = 'none'; document.getElementById('in-call-modal').style.display = 'flex'; 
+            try { 
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); peerConnection = new RTCPeerConnection(rtcConfig); 
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream)); 
+                peerConnection.ontrack = event => { document.getElementById('remote-audio').srcObject = event.streams[0]; }; 
+                peerConnection.onicecandidate = event => { if (event.candidate) client.publish(`familycare/${SYSTEM_ID}/webrtc/candidate/elderly`, JSON.stringify(event.candidate)); }; 
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingOffer)); const answer = await peerConnection.createAnswer(); await peerConnection.setLocalDescription(answer); 
+                client.publish(`familycare/${SYSTEM_ID}/webrtc/answer`, JSON.stringify(answer)); 
+            } catch (err) { showToast("ไมค์ขัดข้อง"); rejectCall(); } 
+        }
+        function rejectCall() { if(autoAnswerTimer) clearInterval(autoAnswerTimer); document.getElementById('ringtone').pause(); client.publish(`familycare/${SYSTEM_ID}/webrtc/hangup`, "true"); endCallLocal(); }
+        function endCallLocal() { if(autoAnswerTimer) clearInterval(autoAnswerTimer); document.getElementById('ringtone').pause(); document.getElementById('incoming-call-modal').style.display = 'none'; document.getElementById('in-call-modal').style.display = 'none'; if (peerConnection) { peerConnection.close(); peerConnection = null; } if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; } }
     </script>
 </body>
 </html>
