@@ -96,7 +96,7 @@
 <body>
     <div id="global-banner"></div>
     <div id="toast-container" class="toast-container"></div>
-    <audio id="remote-audio" autoplay></audio>
+    <audio id="remote-audio" autoplay playsinline></audio>
     <audio id="ringtone" src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg" loop></audio>
     <audio id="audio-player" src="https://listen.radioking.com/radio/15684/stream/29964"></audio>
 
@@ -129,7 +129,7 @@
         <div class="modal">
             <div class="call-avatar"><i class="fa-solid fa-phone-volume"></i></div>
             <h2 style="margin-bottom: 5px;">ลูกหลานโทรมา</h2>
-            <p style="color:var(--text-sub); margin-bottom: 20px;">จะเปิดไมค์รับสายอัตโนมัติใน <span id="auto-answer-timer"></span> วินาที</p>
+            <p style="color:var(--samsung-danger); font-weight:bold; margin-bottom: 20px;">*แอปบังคับให้กดปุ่มรับสายเพื่อเปิดไมค์*</p>
             <div style="display:flex; gap:10px;">
                 <button class="btn-cf" style="background:var(--samsung-danger); flex:1;" onclick="rejectCall()"><i class="fa-solid fa-phone-slash"></i> วางสาย</button>
                 <button class="btn-cf" id="btn-answer-call" style="background:var(--samsung-success); flex:1;" onclick="answerCall()"><i class="fa-solid fa-phone"></i> รับสายเลย</button>
@@ -215,7 +215,7 @@
                 <button class="btn-samsung" onclick="document.getElementById('health-modal').style.display='flex'"><i class="fa-solid fa-heart-pulse" style="color: var(--samsung-danger);"></i>บันทึกสุขภาพ</button>
                 <button class="btn-samsung" onclick="drinkWater()"><i class="fa-solid fa-glass-water" style="color: var(--samsung-primary);"></i><span id="water-count">น้ำ (0)</span></button>
                 <button class="btn-samsung" onclick="showMedicalID()"><i class="fa-solid fa-user-doctor" style="color: var(--text-sub);"></i>ประวัติฉัน</button>
-                <button class="btn-samsung" onclick="speak('ระบบพร้อมใช้งานค่ะ ขอให้สุขภาพแข็งแรงนะคะ')"><i class="fa-solid fa-volume-high" style="color: var(--samsung-success);"></i>ทดสอบเสียง</button>
+                <button class="btn-samsung" onclick="testSystem()"><i class="fa-solid fa-volume-high" style="color: var(--samsung-success);"></i>ทดสอบระบบ</button>
                 <button class="btn-samsung" onclick="openGame()"><i class="fa-solid fa-puzzle-piece" style="color: #2ecc71;"></i>ฝึกสมอง</button>
                 <button class="btn-samsung" onclick="toggleMusic()"><i class="fa-solid fa-music" style="color: #af52de;"></i>ฟังวิทยุ</button>
                 <button class="btn-samsung" onclick="openGallery()"><i class="fa-regular fa-images" style="color: #f7a300;"></i>อัลบั้มรูป</button>
@@ -397,6 +397,19 @@
 
         function speak(txt) { if('speechSynthesis' in window) { window.speechSynthesis.cancel(); const msg = new SpeechSynthesisUtterance(txt); msg.lang = 'th-TH'; msg.rate = 0.9; window.speechSynthesis.speak(msg); } }
 
+        // ฟังก์ชันขอสิทธิ์ล่วงหน้าและทดสอบ
+        async function testSystem() {
+            speak('ระบบเสียงพร้อมใช้งานค่ะ ขอให้สุขภาพแข็งแรงนะคะ');
+            try {
+                const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                tempStream.getTracks().forEach(t => t.stop());
+                showToast("✅ ไมโครโฟนพร้อมใช้งาน!");
+            } catch(e) {
+                console.error("Mic denied:", e);
+                showToast("❌ ยังไม่ได้อนุญาตสิทธิ์ไมค์");
+            }
+        }
+
         setInterval(() => {
             const now = new Date(); const h = now.getHours(); const m = now.getMinutes(); const s = now.getSeconds();
             if(s === 0 && pills.length > 0) {
@@ -440,25 +453,44 @@
         function closeYouTube() { document.getElementById('youtube-container').innerHTML = ""; document.getElementById('youtube-overlay').style.display = 'none'; }
         function openGame() { document.getElementById('game-overlay').style.display = 'flex'; initGame(); } function closeGame() { document.getElementById('game-overlay').style.display = 'none'; } function initGame() { const b = document.getElementById('game-board'); b.innerHTML = ''; cards.sort(() => 0.5 - Math.random()); matches = 0; [fCard, sCard, locked] = [null, null, false]; cards.forEach(c => { let btn = document.createElement('button'); btn.className = 'memory-card'; btn.dataset.val = c; btn.onclick = () => flipCard(btn); b.appendChild(btn); }); } function flipCard(card) { if(locked || card === fCard || card.classList.contains('matched')) return; card.classList.add('flipped'); card.innerText = card.dataset.val; if(!fCard) { fCard = card; return; } sCard = card; locked = true; if(fCard.dataset.val === sCard.dataset.val) { fCard.classList.add('matched'); sCard.classList.add('matched'); matches++; if(matches === 4) setTimeout(() => { showToast("ชนะแล้ว! 🎉"); speak("เก่งมากค่ะ คุณตาชนะแล้ว"); initGame(); }, 500); [fCard, sCard, locked] = [null, null, false]; } else { setTimeout(() => { fCard.classList.remove('flipped'); fCard.innerText = ''; sCard.classList.remove('flipped'); sCard.innerText = ''; [fCard, sCard, locked] = [null, null, false]; }, 1000); } }
 
-        let peerConnection; let localStream; let incomingOffer; let autoAnswerTimer; const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        let peerConnection; let localStream; let incomingOffer; const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
         async function handleWebRTCSignal(action, payload, topic) { 
             if(action === 'offer') { 
-                incomingOffer = JSON.parse(payload); let playPromise = document.getElementById('ringtone').play(); if (playPromise !== undefined) { playPromise.catch(error => { console.log("Ringtone blocked"); }); }
-                document.getElementById('incoming-call-modal').style.display = 'flex'; wakeUp();
-                let countdown = 10; document.getElementById('auto-answer-timer').innerText = `(${countdown})`;
-                autoAnswerTimer = setInterval(() => { countdown--; document.getElementById('auto-answer-timer').innerText = `(${countdown})`; if(countdown <= 0) { clearInterval(autoAnswerTimer); answerCall(); showToast("เปิดไมค์รับสายอัตโนมัติ"); speak("เปิดไมค์รับสายอัตโนมัติแล้วค่ะ"); } }, 1000);
+                incomingOffer = JSON.parse(payload); 
+                let playPromise = document.getElementById('ringtone').play(); 
+                if (playPromise !== undefined) { playPromise.catch(error => { console.log("Ringtone blocked"); }); }
+                document.getElementById('incoming-call-modal').style.display = 'flex'; 
+                wakeUp();
+                // 🛑 ลบ Auto-Answer ออกเพื่อความชัวร์ของ WebView 
             } 
             else if(action === 'candidate_family') { const candidate = JSON.parse(payload); if (peerConnection && peerConnection.remoteDescription) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); } 
             else if(action === 'hangup') { endCallLocal(); showToast("อีกฝ่ายวางสายแล้ว"); } 
         }
+
+        // 🚨 ผูกการขอสิทธิ์ไมค์ไว้กับปุ่มกดรับสายเท่านั้น! 🚨
         async function answerCall() { 
-            if(autoAnswerTimer) clearInterval(autoAnswerTimer); document.getElementById('ringtone').pause(); document.getElementById('incoming-call-modal').style.display = 'none'; document.getElementById('in-call-modal').style.display = 'flex'; 
+            document.getElementById('ringtone').pause(); 
+            document.getElementById('incoming-call-modal').style.display = 'none'; 
+            document.getElementById('in-call-modal').style.display = 'flex'; 
             try { 
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true }); peerConnection = new RTCPeerConnection(rtcConfig); localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream)); peerConnection.ontrack = event => { document.getElementById('remote-audio').srcObject = event.streams[0]; }; peerConnection.onicecandidate = event => { if (event.candidate && client) client.publish(`familycare/${SYSTEM_ID}/webrtc/candidate_elderly`, JSON.stringify(event.candidate)); }; await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingOffer)); const answer = await peerConnection.createAnswer(); await peerConnection.setLocalDescription(answer); if(client) client.publish(`familycare/${SYSTEM_ID}/webrtc/answer`, JSON.stringify(answer)); 
-            } catch (err) { showToast("ไมค์ขัดข้อง"); rejectCall(); } 
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); 
+                peerConnection = new RTCPeerConnection(rtcConfig); 
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream)); 
+                peerConnection.ontrack = event => { document.getElementById('remote-audio').srcObject = event.streams[0]; }; 
+                peerConnection.onicecandidate = event => { if (event.candidate && client) client.publish(`familycare/${SYSTEM_ID}/webrtc/candidate_elderly`, JSON.stringify(event.candidate)); }; 
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingOffer)); 
+                const answer = await peerConnection.createAnswer(); 
+                await peerConnection.setLocalDescription(answer); 
+                if(client) client.publish(`familycare/${SYSTEM_ID}/webrtc/answer`, JSON.stringify(answer)); 
+            } catch (err) { 
+                console.error("Mic Error:", err);
+                showToast("❌ ไมค์ถูกบล็อก! กรุณาอนุญาตในการตั้งค่าแอป"); 
+                rejectCall(); 
+            } 
         }
-        function rejectCall() { if(autoAnswerTimer) clearInterval(autoAnswerTimer); document.getElementById('ringtone').pause(); if(client) client.publish(`familycare/${SYSTEM_ID}/webrtc/hangup`, "true"); endCallLocal(); }
-        function endCallLocal() { if(autoAnswerTimer) clearInterval(autoAnswerTimer); document.getElementById('ringtone').pause(); document.getElementById('incoming-call-modal').style.display = 'none'; document.getElementById('in-call-modal').style.display = 'none'; if (peerConnection) { peerConnection.close(); peerConnection = null; } if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; } }
+
+        function rejectCall() { document.getElementById('ringtone').pause(); if(client) client.publish(`familycare/${SYSTEM_ID}/webrtc/hangup`, "true"); endCallLocal(); }
+        function endCallLocal() { document.getElementById('ringtone').pause(); document.getElementById('incoming-call-modal').style.display = 'none'; document.getElementById('in-call-modal').style.display = 'none'; if (peerConnection) { peerConnection.close(); peerConnection = null; } if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; } }
     </script>
 </body>
 </html>
