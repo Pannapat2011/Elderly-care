@@ -451,7 +451,7 @@
         function openGame() { document.getElementById('game-overlay').style.display = 'flex'; initGame(); } function closeGame() { document.getElementById('game-overlay').style.display = 'none'; } function initGame() { const b = document.getElementById('game-board'); b.innerHTML = ''; cards.sort(() => 0.5 - Math.random()); matches = 0; [fCard, sCard, locked] = [null, null, false]; cards.forEach(c => { let btn = document.createElement('button'); btn.className = 'memory-card'; btn.dataset.val = c; btn.onclick = () => flipCard(btn); b.appendChild(btn); }); } function flipCard(card) { if(locked || card === fCard || card.classList.contains('matched')) return; card.classList.add('flipped'); card.innerText = card.dataset.val; if(!fCard) { fCard = card; return; } sCard = card; locked = true; if(fCard.dataset.val === sCard.dataset.val) { fCard.classList.add('matched'); sCard.classList.add('matched'); matches++; if(matches === 4) setTimeout(() => { showToast("ชนะแล้ว! 🎉"); speak("เก่งมากค่ะ คุณตาชนะแล้ว"); initGame(); }, 500); [fCard, sCard, locked] = [null, null, false]; } else { setTimeout(() => { fCard.classList.remove('flipped'); fCard.innerText = ''; sCard.classList.remove('flipped'); sCard.innerText = ''; [fCard, sCard, locked] = [null, null, false]; }, 1000); } }
 
         // --- ระบบ WebRTC โทรเข้า/ออก ---
-        let peerConnection; let localStream; let incomingOffer; const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        let peerConnection; let localStream; let incomingOffer; let familyCandidateQueue = []; const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
         
         async function handleWebRTCSignal(action, payload, topic) { 
             if(action === 'offer') { 
@@ -461,7 +461,14 @@
                 document.getElementById('incoming-call-modal').style.display = 'flex'; 
                 wakeUp();
             } 
-            else if(action === 'candidate_family') { const candidate = JSON.parse(payload); if (peerConnection && peerConnection.remoteDescription) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)); } 
+            else if(action === 'candidate_family') { 
+                const candidate = JSON.parse(payload); 
+                if (peerConnection && peerConnection.remoteDescription) {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error(e));
+                } else {
+                    familyCandidateQueue.push(candidate);
+                }
+            } 
             else if(action === 'hangup') { endCallLocal(); showToast("อีกฝ่ายวางสายแล้ว"); } 
         }
 
@@ -476,6 +483,12 @@
                 peerConnection.ontrack = event => { document.getElementById('remote-audio').srcObject = event.streams[0]; }; 
                 peerConnection.onicecandidate = event => { if (event.candidate && client) client.publish(`familycare/${SYSTEM_ID}/webrtc/candidate_elderly`, JSON.stringify(event.candidate)); }; 
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingOffer)); 
+                
+                while(familyCandidateQueue.length > 0) {
+                    let candidate = familyCandidateQueue.shift();
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error(e));
+                }
+
                 const answer = await peerConnection.createAnswer(); 
                 await peerConnection.setLocalDescription(answer); 
                 if(client) client.publish(`familycare/${SYSTEM_ID}/webrtc/answer`, JSON.stringify(answer)); 
@@ -487,7 +500,7 @@
         }
 
         function rejectCall() { document.getElementById('ringtone').pause(); if(client) client.publish(`familycare/${SYSTEM_ID}/webrtc/hangup`, "true"); endCallLocal(); }
-        function endCallLocal() { document.getElementById('ringtone').pause(); document.getElementById('incoming-call-modal').style.display = 'none'; document.getElementById('in-call-modal').style.display = 'none'; if (peerConnection) { peerConnection.close(); peerConnection = null; } if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; } }
+        function endCallLocal() { document.getElementById('ringtone').pause(); document.getElementById('incoming-call-modal').style.display = 'none'; document.getElementById('in-call-modal').style.display = 'none'; if (peerConnection) { peerConnection.close(); peerConnection = null; } if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; } familyCandidateQueue = []; }
     </script>
 </body>
 </html>
